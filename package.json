@@ -10,11 +10,11 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "rpg-dice-roller": "^5.0.0"
+    "rpg-dice-roller": "^5.2.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.0.0",
     "vite": "^5.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
     "vite-plugin-pwa": "^1.0.0"
   }
 }
