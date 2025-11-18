@@ -7,18 +7,23 @@ jobs:
   add-starter:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Create starter files via GitHub API
-        uses: actions/github-script@v6
         with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+          ref: main
+          persist-credentials: true
 
-            const files = {
-              "package.json": `{
+      - name: Create starter scaffold files and commit to branch
+        env:
+          GIT_AUTHOR_NAME: "github-actions[bot]"
+          GIT_AUTHOR_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+        run: |
+          set -euo pipefail
+
+          mkdir -p src/components src/workers public/icons
+
+          cat > package.json <<'EOF'
+{
   "name": "dnd-pwa",
   "version": "0.1.0",
   "private": true,
@@ -37,8 +42,11 @@ jobs:
     "@vitejs/plugin-react": "^5.0.0",
     "vite-plugin-pwa": "^1.0.0"
   }
-}`,
-              "vite.config.js": `import { defineConfig } from 'vite';
+}
+EOF
+
+          cat > vite.config.js <<'EOF'
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -61,8 +69,11 @@ export default defineConfig({
       }
     })
   ]
-});`,
-              "index.html": `<!doctype html>
+});
+EOF
+
+          cat > index.html <<'EOF'
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -73,8 +84,12 @@ export default defineConfig({
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
-</html>`,
-              "public/manifest.webmanifest": `{
+</html>
+EOF
+
+          mkdir -p public
+          cat > public/manifest.webmanifest <<'EOF'
+{
   "name": "DnD DM PWA",
   "short_name": "DnDDM",
   "start_url": "/",
@@ -85,8 +100,11 @@ export default defineConfig({
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
-}`,
-              "public/service-worker.js": `const CACHE_NAME = 'dnd-pwa-v1';
+}
+EOF
+
+          cat > public/service-worker.js <<'EOF'
+const CACHE_NAME = 'dnd-pwa-v1';
 const FILES_TO_CACHE = [
   '/',
   '/index.html',
@@ -105,14 +123,20 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
-});`,
-              "src/main.jsx": `import React from 'react';
+});
+EOF
+
+          cat > src/main.jsx <<'EOF'
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles.css';
 
-createRoot(document.getElementById('root')).render(<App />);`,
-              "src/App.jsx": `import React, { useEffect, useState } from 'react';
+createRoot(document.getElementById('root')).render(<App />);
+EOF
+
+          cat > src/App.jsx <<'EOF'
+import React, { useEffect, useState } from 'react';
 import DiceRoller from './components/DiceRoller';
 
 export default function App() {
@@ -144,8 +168,11 @@ export default function App() {
       </section>
     </div>
   );
-}`,
-              "src/components/DiceRoller.jsx": `import React, { useState } from 'react';
+}
+EOF
+
+          cat > src/components/DiceRoller.jsx <<'EOF'
+import React, { useState } from 'react';
 import { DiceRoller } from 'rpg-dice-roller';
 
 export default function DiceRollerComponent() {
@@ -172,8 +199,11 @@ export default function DiceRollerComponent() {
       <div style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>{result}</div>
     </div>
   );
-}`,
-              "src/workers/llmWorker.js": `// Worker skeleton for in-browser LLM integration.
+}
+EOF
+
+          cat > src/workers/llmWorker.js <<'EOF'
+// Worker skeleton for in-browser LLM integration.
 // The UI can send: { type: 'loadModel', url: '...' } and { type: 'generate', prompt: '...' }
 
 self.onmessage = async (e) => {
@@ -188,18 +218,24 @@ self.onmessage = async (e) => {
   } else if (msg.type === 'generate') {
     const prompt = msg.prompt || '';
     const reply = {
-      text: \`Placeholder DM response to prompt: \${prompt.slice(0, 120)}...\`,
+      text: `Placeholder DM response to prompt: ${prompt.slice(0, 120)}...`,
       structure: { description: 'A short scene description', options: ['Option A', 'Option B'] }
     };
     self.postMessage({ type: 'response', reply });
   }
-};`,
-              "src/prompt-templates.json": `{
+};
+EOF
+
+          cat > src/prompt-templates.json <<'EOF'
+{
   "system_dm": "You are a helpful Dungeons & Dragons dungeon master. Keep descriptions vivid but concise (2-4 sentences). Provide 2 actionable options players can choose from. If dice or stats are provided, incorporate them into the outcome. Output must be valid JSON with keys: 'description', 'options' (array of strings), and optional 'meta'.",
-  "scene_prompt": "Scene context: {scene}\\nPlayer actions: {actions}\\nRecent dice: {dice_results}\\nReturn JSON as described in system_dm.",
-  "npc_prompt": "NPC: {npc_name}\\nPersonality: {npc_personality}\\nQuestion: {question}\\nRespond as the NPC in-character in a single short paragraph, then provide 2 possible plot hooks in the 'options' array of the JSON."
-}`,
-              "README.md": `# dnd-pwa (starter)
+  "scene_prompt": "Scene context: {scene}\nPlayer actions: {actions}\nRecent dice: {dice_results}\nReturn JSON as described in system_dm.",
+  "npc_prompt": "NPC: {npc_name}\nPersonality: {npc_personality}\nQuestion: {question}\nRespond as the NPC in-character in a single short paragraph, then provide 2 possible plot hooks in the 'options' array of the JSON."
+}
+EOF
+
+          cat > README.md <<'EOF'
+# dnd-pwa (starter)
 
 Minimal starter for a DnD PWA with an AI DM worker skeleton (Option B).
 
@@ -221,43 +257,45 @@ Where to put your in-browser model:
 Pushing to GitHub (example)
 - Initialize locally, add files, create repo on GitHub, and push (see commands below).
 
-License: MIT`,
-              ".gitignore": `node_modules
+License: MIT
+EOF
+
+          cat > .gitignore <<'EOF'
+node_modules
 dist
 .env
-.DS_Store`
-            };
+.DS_Store
+EOF
 
-            for (const [path, text] of Object.entries(files)) {
-              const content = Buffer.from(text, 'utf8').toString('base64');
-              const message = `Add ${path} (starter scaffold)`;
-              try {
-                const getResp = await github.rest.repos.getContent({
-                  owner, repo, path
-                });
-                await github.rest.repos.createOrUpdateFileContents({
-                  owner,
-                  repo,
-                  path,
-                  message,
-                  content,
-                  sha: getResp.data.sha,
-                });
-                core.info(`Updated ${path}`);
-              } catch (err) {
-                if (err.status === 404) {
-                  await github.rest.repos.createOrUpdateFileContents({
-                    owner,
-                    repo,
-                    path,
-                    message,
-                    content,
-                  });
-                  core.info(`Created ${path}`);
-                } else {
-                  throw err;
-                }
-              }
-            }
+          # Ensure icons exist (tiny placeholders)
+          convert -size 192x192 xc:#0f172a public/icons/icon-192.png 2>/dev/null || true
+          convert -size 512x512 xc:#0f172a public/icons/icon-512.png 2>/dev/null || true
 
-            core.info("Starter scaffold added/updated.");
+          git config user.name "${GIT_AUTHOR_NAME}"
+          git config user.email "${GIT_AUTHOR_EMAIL}"
+
+          # Create branch and commit
+          git checkout -b starter/scaffold || git switch starter/scaffold
+          git add .
+          if git diff --quiet --cached; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add starter scaffold"
+          fi
+
+          # Push branch
+          git push --set-upstream origin starter/scaffold
+
+      - name: Open a pull request
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          PR_TITLE="Add starter scaffold"
+          PR_BODY="This PR was created by a workflow to add a starter scaffold (Vite + React + PWA + worker skeleton)."
+          API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls"
+          # Create PR
+          RESPONSE=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "${API_URL}" -d "{\"title\":\"${PR_TITLE}\",\"head\":\"starter/scaffold\",\"base\":\"main\",\"body\":\"${PR_BODY}\"}")
+          echo "$RESPONSE"
