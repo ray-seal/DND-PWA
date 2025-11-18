@@ -1,0 +1,260 @@
+# Create starter scaffold files (run manually from Actions -> "Run workflow")
+on:
+  workflow_dispatch:
+
+jobs:
+  add-starter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create starter files via GitHub API
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const files = {
+              "package.json": `{
+  "name": "dnd-pwa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rpg-dice-roller": "^5.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite-plugin-pwa": "^1.0.0"
+  }
+}`,
+              "vite.config.js": `import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'DnD DM PWA',
+        short_name: 'DnDDM',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#0f172a',
+        theme_color: '#0f172a',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+        ]
+      }
+    })
+  ]
+});`,
+              "index.html": `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>DnD DM PWA</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>`,
+              "public/manifest.webmanifest": `{
+  "name": "DnD DM PWA",
+  "short_name": "DnDDM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}`,
+              "public/service-worker.js": `const CACHE_NAME = 'dnd-pwa-v1';
+const FILES_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/src/main.jsx',
+  '/dist/assets/index.js'
+];
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(FILES_TO_CACHE)));
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+});`,
+              "src/main.jsx": `import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './styles.css';
+
+createRoot(document.getElementById('root')).render(<App />);`,
+              "src/App.jsx": `import React, { useEffect, useState } from 'react';
+import DiceRoller from './components/DiceRoller';
+
+export default function App() {
+  const [workerStatus, setWorkerStatus] = useState('idle');
+  useEffect(() => {
+    const worker = new Worker(new URL('./workers/llmWorker.js', import.meta.url), { type: 'module' });
+    worker.onmessage = (e) => {
+      const msg = e.data;
+      if (msg.type === 'status') setWorkerStatus(msg.status);
+    };
+    worker.postMessage({ type: 'statusCheck' });
+    return () => worker.terminate();
+  }, []);
+
+  return (
+    <div style={{ padding: 20, fontFamily: 'system-ui, sans-serif', maxWidth: 900 }}>
+      <h1>DnD DM PWA (starter)</h1>
+      <p>Minimal PWA with a Web Worker skeleton for an in-browser LLM.</p>
+
+      <DiceRoller />
+
+      <section style={{ marginTop: 20 }}>
+        <h2>AI DM (worker)</h2>
+        <p>Worker status: {workerStatus}</p>
+        <p>
+          The Web Worker at src/workers/llmWorker.js is a placeholder. When you have a WASM/JS runtime (e.g.
+          gpt4all-native-web or a llama wasm build), drop code into the worker and communicate via postMessage.
+        </p>
+      </section>
+    </div>
+  );
+}`,
+              "src/components/DiceRoller.jsx": `import React, { useState } from 'react';
+import { DiceRoller } from 'rpg-dice-roller';
+
+export default function DiceRollerComponent() {
+  const [expr, setExpr] = useState('1d20+3');
+  const [result, setResult] = useState('');
+
+  function roll() {
+    try {
+      const dr = new DiceRoller();
+      const r = dr.roll(expr);
+      setResult(r.output);
+    } catch (e) {
+      setResult('Invalid expression');
+    }
+  }
+
+  return (
+    <div>
+      <h2>Dice Roller</h2>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <input value={expr} onChange={(e) => setExpr(e.target.value)} style={{ width: 260, padding: 6 }} />
+        <button onClick={roll} style={{ marginLeft: 8, padding: '6px 10px' }}>Roll</button>
+      </div>
+      <div style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>{result}</div>
+    </div>
+  );
+}`,
+              "src/workers/llmWorker.js": `// Worker skeleton for in-browser LLM integration.
+// The UI can send: { type: 'loadModel', url: '...' } and { type: 'generate', prompt: '...' }
+
+self.onmessage = async (e) => {
+  const msg = e.data;
+  if (msg.type === 'statusCheck') {
+    self.postMessage({ type: 'status', status: 'placeholder-ready' });
+    return;
+  }
+
+  if (msg.type === 'loadModel') {
+    self.postMessage({ type: 'status', status: 'loaded-placeholder' });
+  } else if (msg.type === 'generate') {
+    const prompt = msg.prompt || '';
+    const reply = {
+      text: \`Placeholder DM response to prompt: \${prompt.slice(0, 120)}...\`,
+      structure: { description: 'A short scene description', options: ['Option A', 'Option B'] }
+    };
+    self.postMessage({ type: 'response', reply });
+  }
+};`,
+              "src/prompt-templates.json": `{
+  "system_dm": "You are a helpful Dungeons & Dragons dungeon master. Keep descriptions vivid but concise (2-4 sentences). Provide 2 actionable options players can choose from. If dice or stats are provided, incorporate them into the outcome. Output must be valid JSON with keys: 'description', 'options' (array of strings), and optional 'meta'.",
+  "scene_prompt": "Scene context: {scene}\\nPlayer actions: {actions}\\nRecent dice: {dice_results}\\nReturn JSON as described in system_dm.",
+  "npc_prompt": "NPC: {npc_name}\\nPersonality: {npc_personality}\\nQuestion: {question}\\nRespond as the NPC in-character in a single short paragraph, then provide 2 possible plot hooks in the 'options' array of the JSON."
+}`,
+              "README.md": `# dnd-pwa (starter)
+
+Minimal starter for a DnD PWA with an AI DM worker skeleton (Option B).
+
+Quick start:
+1. Install:
+   npm install
+
+2. Run dev:
+   npm run dev
+
+3. Build:
+   npm run build
+   npm run preview
+
+Where to put your in-browser model:
+- Edit src/workers/llmWorker.js and integrate the WASM/JS runtime (gpt4all-native-web, llama wasm, etc).
+- Load weights once (consider storing in IndexedDB) and run inference inside the worker to avoid blocking the UI.
+
+Pushing to GitHub (example)
+- Initialize locally, add files, create repo on GitHub, and push (see commands below).
+
+License: MIT`,
+              ".gitignore": `node_modules
+dist
+.env
+.DS_Store`
+            };
+
+            for (const [path, text] of Object.entries(files)) {
+              const content = Buffer.from(text, 'utf8').toString('base64');
+              const message = `Add ${path} (starter scaffold)`;
+              try {
+                const getResp = await github.rest.repos.getContent({
+                  owner, repo, path
+                });
+                // file exists — update it
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner,
+                  repo,
+                  path,
+                  message,
+                  content,
+                  sha: getResp.data.sha,
+                });
+                core.info(`Updated ${path}`);
+              } catch (err) {
+                if (err.status === 404) {
+                  await github.rest.repos.createOrUpdateFileContents({
+                    owner,
+                    repo,
+                    path,
+                    message,
+                    content,
+                  });
+                  core.info(`Created ${path}`);
+                } else {
+                  throw err;
+                }
+              }
+            }
+
+            core.info("Starter scaffold added/updated.");
