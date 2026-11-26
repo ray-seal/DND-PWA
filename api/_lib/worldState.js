@@ -26,7 +26,7 @@ function applyWorldEvents(previous,events,reply,characters,playerAction){
     if(event.type==='npc_moved'){
       const from=String(event.from||''),to=String(event.to||'').trim();
       const current=String(world.npcLocations[person.id]||person.currentLocation||'Unknown');
-      const movement=/\\b(walks?|travels?|moves?|leaves?|enters?|arrives?|follows?|heads?|returns?|departs?|goes)\\b/i.test(reply||'');
+      const movement=/\b(walks?|travels?|moves?|leaves?|enters?|arrives?|follows?|heads?|returns?|departs?|goes)\b/i.test(reply||'');
       const named=name&&response.includes(name);
       const destination=to&&response.includes(to.toLowerCase());
       if(!to||!from||from!==current||!movement||!named||!destination)continue;
