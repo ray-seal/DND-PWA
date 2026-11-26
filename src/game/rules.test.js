@@ -52,3 +52,24 @@ test("encounter budget responds to party level and size", () => {
 test("invalid character sheets are rejected", () => {
   assert.throws(()=>rules.validateCharacter({...hero,abilities:{str:0}}),/STR/);
 });
+
+test("advantage keeps the higher of two d20s", () => {
+  const values=[5,17];
+  const result=rules.abilityCheck(hero,"dex",{advantage:true,randomInt:()=>values.shift()});
+  assert.deepEqual(result.rolls,[5,17]);
+  assert.equal(result.die,17);
+  assert.equal(result.mode,"advantage");
+});
+test("disadvantage keeps the lower of two d20s", () => {
+  const values=[5,17];
+  const result=rules.abilityCheck(hero,"dex",{disadvantage:true,randomInt:()=>values.shift()});
+  assert.deepEqual(result.rolls,[5,17]);
+  assert.equal(result.die,5);
+  assert.equal(result.mode,"disadvantage");
+});
+test("advantage and disadvantage cancel to one normal roll", () => {
+  let calls=0;
+  const result=rules.abilityCheck(hero,"dex",{advantage:true,disadvantage:true,randomInt:()=>{calls++;return 12;}});
+  assert.equal(calls,1);
+  assert.equal(result.mode,"normal");
+});
