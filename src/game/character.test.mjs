@@ -13,3 +13,13 @@ test('clamps hit points to the sheet maximum', () => {
   const hero=createCharacter({name:'Mira',maxHp:10,hp:99});
   assert.equal(hero.hp,10);
 });
+
+test('rejects ability scores outside the 5e character creation range', () => {
+  assert.throws(() => createCharacter({name:'Cheater',abilities:{str:99}}), /STR must be an integer from 3 to 20/);
+  assert.throws(() => createCharacter({name:'Cheater',abilities:{dex:2}}), /DEX must be an integer from 3 to 20/);
+});
+
+test('accepts a character with a valid 20 ability score', () => {
+  const hero=createCharacter({name:'Mira',abilities:{str:20}});
+  assert.equal(hero.abilities.str,20);
+});
