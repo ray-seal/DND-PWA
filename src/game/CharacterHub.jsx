@@ -2,7 +2,7 @@ import React,{useCallback,useEffect,useMemo,useState} from 'react';
 import {useAuth} from '../auth/AuthProvider';
 import {progressSummary,DETECTIVE_SKILL_GROUPS} from './progression';
 import {rollAbilityScores} from './abilityScores';
-import {startingStats,speciesAbilityScores} from './dnd5e';
+import {startingStats,speciesAbilityScores,speciesBaseAbilityScores} from './dnd5e';
 import './characters.css';
 
 const ABILITIES=[['str','Strength'],['dex','Dexterity'],['con','Constitution'],['int','Intelligence'],['wis','Wisdom'],['cha','Charisma']];
@@ -30,14 +30,14 @@ export default function CharacterHub({onBack}) {
  async function save(e){e.preventDefault();setSaving(true);setError('');try{
   const finalAbilities=draft.genre==='dnd'?speciesAbilityScores(draft.species,draft.abilities):draft.abilities;
   const derived=draft.genre==='dnd'?startingStats(draft.className,finalAbilities,draft.level):{maxHp:draft.maxHp,armourClass:draft.ac};
-  const payload={name:draft.name,species:draft.species,className:draft.className,level:draft.level,xp:draft.xp,hp:derived.maxHp,maxHp:derived.maxHp,ac:derived.armourClass,abilities:finalAbilities,sheet:{genre:draft.genre,skills:draft.skills,equipment:draft.equipment,spells:draft.spells,biography:draft.biography,experienceType:draft.genre==='csi'?'detective':'dnd'}};
+  const payload={name:draft.name,species:draft.species,className:draft.className,level:draft.level,xp:draft.xp,hp:derived.maxHp,maxHp:derived.maxHp,ac:derived.armourClass,abilities:draft.abilities,sheet:{genre:draft.genre,skills:draft.skills,equipment:draft.equipment,spells:draft.spells,biography:draft.biography,experienceType:draft.genre==='csi'?'detective':'dnd'}};
   if(draft.genre==='dnd'&&!draft.id&&!abilityRolls)throw new Error('Roll your six ability scores before saving.');
   if(draft.id){await request('/api/characters',{method:'PATCH',body:JSON.stringify({...payload,id:draft.id})})}else{await request('/api/characters',{method:'POST',body:JSON.stringify(payload)})}
   setDraft(null);await refresh();
  }catch(e){setError(e.message)}finally{setSaving(false)}}
  async function remove(id){if(!window.confirm('Delete this character permanently?'))return;try{await request('/api/characters',{method:'DELETE',body:JSON.stringify({id})});setSelected(null);await refresh()}catch(e){setError(e.message)}}
  const open=(c)=>{setSelected(c);setDraft(null)};
- const edit=(c)=>{setSelected(null);setAbilityRolls(null);setAbilityAssignment([0,1,2,3,4,5]);setDraft({id:c.id,name:c.name,genre:c.sheet?.genre||'dnd',className:c.class_name,species:c.species,level:c.level,xp:c.experience,abilities:c.abilities,hp:c.hit_points,maxHp:c.max_hit_points,ac:c.armour_class,skills:c.sheet?.skills||[],equipment:c.sheet?.equipment||[],spells:c.sheet?.spells||[],biography:c.sheet?.biography||''})};
+ const edit=(c)=>{setSelected(null);setAbilityRolls(null);setAbilityAssignment([0,1,2,3,4,5]);setDraft({id:c.id,name:c.name,genre:c.sheet?.genre||'dnd',className:c.class_name,species:c.species,level:c.level,xp:c.experience,abilities:c.sheet?.genre==='dnd'?speciesBaseAbilityScores(c.species,c.abilities):c.abilities,hp:c.hit_points,maxHp:c.max_hit_points,ac:c.armour_class,skills:c.sheet?.skills||[],equipment:c.sheet?.equipment||[],spells:c.sheet?.spells||[],biography:c.sheet?.biography||''})};
  const activeSkills=useMemo(()=>draft?.genre==='csi'?DETECTIVE_SKILL_GROUPS.investigation:SKILLS,[draft?.genre]);
  return <main className="character-hub">
   <div className="character-top"><button className="character-back" onClick={onBack}>← BACK TO STORYFOUNDRY</button><span>YOUR CHARACTER VAULT</span></div>
