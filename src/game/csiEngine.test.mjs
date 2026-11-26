@@ -2,7 +2,7 @@ import {createRequire} from 'node:module';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 const require=createRequire(import.meta.url);
-const {assistanceLevel,recordAssistance,calculateCaseScore,preserveCaseTruth,calculateCaseReview}=require('../../api/_lib/csi.js');
+const {assistanceLevel,recordAssistance,calculateCaseScore,preserveCaseTruth,calculateCaseReview,requestedAssistanceLevel}=require('../../api/_lib/csi.js');
 
 test('brainstorming has no assistance level or XP deduction',()=>{
   assert.equal(assistanceLevel(0),null);
@@ -47,4 +47,12 @@ test('case review requires the sealed culprit and discovered evidence to solve',
   const wrong=calculateCaseReview(state,'suspect-a','A different theory.');
   assert.equal(wrong.verdict,'CASE UNRESOLVED');
   assert.equal(wrong.correctSuspectId,null);
+});
+
+test('free theory discussion stays free while explicit answer requests count as assistance',()=>{
+  assert.equal(requestedAssistanceLevel('What do you think of my theory about the footprints?',0),0);
+  assert.equal(requestedAssistanceLevel('Could the witness be mistaken?',0),0);
+  assert.equal(requestedAssistanceLevel('Give me a hint about the timeline',0),1);
+  assert.equal(requestedAssistanceLevel('Tell me the answer, who did it?',0),3);
+  assert.equal(requestedAssistanceLevel('Give me the solution',1),3);
 });
