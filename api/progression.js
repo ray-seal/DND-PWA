@@ -1,3 +1,4 @@
+const applyCors=require('./_lib/cors');
 const {getPool,verifyUser}=require('./_lib/db');
 const crypto=require('node:crypto');
 
@@ -17,6 +18,7 @@ function levelRewards(track,className,from,to){const out=[];const fighter={2:'Ac
 function slots(className,level){const full=['Wizard','Sorcerer','Bard','Cleric','Druid'];if(full.includes(className)){const table={1:[],2:[3],3:[4,2],4:[4,3],5:[4,3,2],6:[4,3,3],7:[4,3,3,1],8:[4,3,3,2],9:[4,3,3,3,1],10:[4,3,3,3,2],11:[4,3,3,3,2,1],12:[4,3,3,3,2,1],13:[4,3,3,3,2,1,1],14:[4,3,3,3,2,1,1],15:[4,3,3,3,2,1,1,1],16:[4,3,3,3,2,1,1,1],17:[4,3,3,3,2,1,1,1,1],18:[4,3,3,3,3,1,1,1,1],19:[4,3,3,3,3,2,1,1,1],20:[4,3,3,3,3,2,2,1,1]};return table[level]||[]}if(['Paladin','Ranger'].includes(className))return level<2?[]:level<5?[2]:level<7?[3,2]:[4,3,2];return null}
 function modifier(score){return Math.floor((Number(score||10)-10)/2)}
 module.exports=async function(req,res){
+ if(applyCors(req,res))return;
  res.setHeader('Cache-Control','no-store');
  if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'Use POST to record progression.'})}
  let client;
