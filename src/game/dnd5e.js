@@ -28,7 +28,7 @@ const ARMOUR = {
 };
 export function abilityMod(score){return Math.floor((Number(score)-10)/2)}
 const SPECIES_BONUSES = {Human:{str:1,dex:1,con:1,int:1,wis:1,cha:1},Elf:{dex:2},Dwarf:{con:2},Halfling:{dex:2},Dragonborn:{str:2,cha:1},Gnome:{int:2},'Half-Elf':{cha:2},'Half-Orc':{str:2,con:1},Tiefling:{int:1,cha:2},Other:{}};
-export function speciesAbilityScores(species,base){
+export function speciesBaseAbilityScores(species,final){ const bonus=SPECIES_BONUSES[species]||{}; return Object.fromEntries(['str','dex','con','int','wis','cha'].map(k=>[k,Math.max(3,(Number(final?.[k])||10)-(bonus[k]||0))]));}\nexport function speciesAbilityScores(species,base){
  const bonus=SPECIES_BONUSES[species]||{};
  return Object.fromEntries(['str','dex','con','int','wis','cha'].map(k=>[k,Math.min(20,(Number(base?.[k])||10)+(bonus[k]||0))]));
 }
