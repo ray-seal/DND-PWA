@@ -2,7 +2,7 @@ import {createRequire} from 'node:module';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 const require=createRequire(import.meta.url);
-const {assistanceLevel,recordAssistance,calculateCaseScore,preserveCaseTruth}=require('../../api/_lib/csi.js');
+const {assistanceLevel,recordAssistance,calculateCaseScore,preserveCaseTruth,calculateCaseReview}=require('../../api/_lib/csi.js');
 
 test('brainstorming has no assistance level or XP deduction',()=>{
   assert.equal(assistanceLevel(0),null);
@@ -33,4 +33,18 @@ test('case truth, timeline, facts and clue catalogue cannot be rewritten',()=>{
 
 test('case score never becomes negative',()=>{
   assert.equal(calculateCaseScore({baseXp:10,assistance:{direct:99}}).finalXp,0);
+});
+
+test('case review requires the sealed culprit and discovered evidence to solve',()=>{
+  const state={caseFile:{culpritId:'suspect-b',evidenceCatalogue:[{id:'shoe'},{id:'glass'}]},clues:[{id:'shoe',discovered:true},{id:'unrelated',discovered:true}],csiAssistance:{gentle:1,directional:1,direct:0}};
+  const solved=calculateCaseReview(state,'suspect-b','The shoe mark and timeline place the suspect at the scene.');
+  assert.equal(solved.verdict,'CASE SOLVED');
+  assert.equal(solved.verifiedEvidence,1);
+  assert.equal(solved.xpDeducted,35);
+  assert.equal(solved.xpAwarded,220);
+  const unsupported=calculateCaseReview(state,'suspect-b','');
+  assert.equal(unsupported.verdict,'CASE SOLVED');
+  const wrong=calculateCaseReview(state,'suspect-a','A different theory.');
+  assert.equal(wrong.verdict,'CASE UNRESOLVED');
+  assert.equal(wrong.correctSuspectId,null);
 });
