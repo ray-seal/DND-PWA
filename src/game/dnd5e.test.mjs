@@ -27,5 +27,5 @@ test('species ability bonuses apply once and can be reversed for editing',()=>{
  assert.deepEqual(speciesBaseAbilityScores('Tiefling',final),base);
 });
 test('hit points increase with level using fixed average hit die progression',()=>{
- assert.equal(startingStats('Fighter',{con:2},2).maxHp,17);
+ assert.equal(startingStats('Fighter',{con:14},2).maxHp,20);
 });
