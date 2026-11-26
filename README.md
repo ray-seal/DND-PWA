@@ -65,3 +65,10 @@ Required server variables: `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS
 ### Current limits
 
 This is the account and persistence foundation, not the finished multiplayer tabletop experience. The character/campaign endpoints are initial CRUD foundations; the full character-sheet UI, campaign scene editor, combat encounter view, turn event pipeline, invitation acceptance flow, AI player seat orchestration and reward validation are still roadmap items. Keep the current local saves for crime, horror and fantasy until their account migration is designed separately.
+
+
+## Fantasy rules and attribution
+
+The Fantasy experience uses a fifth-edition-compatible tabletop rules foundation. Where SRD 5.1 material is used, this project includes material from the System Reference Document 5.1 (SRD 5.1) by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0), available at https://creativecommons.org/licenses/by/4.0/legalcode. This project is an independent work and is not affiliated with or endorsed by Wizards of the Coast.
+
+StoryFoundry uses original settings, characters, storylines, artwork and names. Do not add protected D&D setting lore, characters, trademarks or non-SRD material without appropriate permission.
