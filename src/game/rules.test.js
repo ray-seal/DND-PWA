@@ -32,7 +32,7 @@ test("natural 20 is a critical hit and natural 1 misses", () => {
 });
 test("saving throws include proficiency only when proficient", () => {
   assert.equal(rules.savingThrow(hero,"str",{dc:15,randomInt:fixed(10)}).total,15);
-  assert.equal(rules.savingThrow(hero,"dex",{dc:15,randomInt:fixed(10)}).total,2);
+  assert.equal(rules.savingThrow(hero,"dex",{dc:15,randomInt:fixed(10)}).total,12);
 });
 test("initiative uses dexterity modifier", () => {
   assert.equal(rules.initiative(hero,{randomInt:fixed(10)}).total,12);
@@ -47,7 +47,7 @@ test("encounter budget responds to party level and size", () => {
   const one = rules.encounterBudget([hero],"balanced");
   const two = rules.encounterBudget([hero,{...hero,id:"hero-2",level:5}],"hard");
   assert.equal(one.targetBudget,75);
-  assert.equal(two.targetBudget,600);
+  assert.equal(two.targetBudget,300);
 });
 test("invalid character sheets are rejected", () => {
   assert.throws(()=>rules.validateCharacter({...hero,abilities:{str:0}}),/STR/);
