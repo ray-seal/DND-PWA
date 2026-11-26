@@ -1,5 +1,7 @@
+const applyCors=require('./_lib/cors');
 const {getPool,verifyUser}=require('./_lib/db');
 module.exports=async function(req,res){
+ if(applyCors(req,res))return;
   res.setHeader('Cache-Control','no-store');
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed.'})}
   try{

@@ -1,3 +1,4 @@
+const applyCors=require('./_lib/cors');
 const {getPool,verifyUser}=require('./_lib/db');
 function body(req){return typeof req.body==='string'?JSON.parse(req.body):(req.body||{})}
 function cleanName(value){const name=String(value||'').trim();if(!name||name.length>60)throw Object.assign(new Error('Character name must be 1-60 characters.'),{status:400});return name}
@@ -27,6 +28,7 @@ function derivedDnd(className,abilities,level=1){
 }
 function cleanSheet(value){const s=value&&typeof value==='object'?value:{};return {genre:['dnd','csi','horror','fantasy'].includes(s.genre)?s.genre:'dnd',experienceType:s.genre==='csi'?'detective':s.genre==='horror'?'horror':s.genre==='fantasy'?'fantasy':'dnd',skills:Array.isArray(s.skills)?s.skills.map(x=>String(x).slice(0,60)).slice(0,5):[],equipment:Array.isArray(s.equipment)?s.equipment.map(x=>String(x).slice(0,100)).slice(0,60):[],spells:Array.isArray(s.spells)?s.spells.map(x=>String(x).slice(0,100)).slice(0,60):[],biography:String(s.biography||'').slice(0,4000)}}
 module.exports=async function(req,res){
+ if(applyCors(req,res))return;
  res.setHeader('Cache-Control','no-store');
  if(!['GET','POST','PATCH','DELETE'].includes(req.method)){res.setHeader('Allow','GET, POST, PATCH, DELETE');return res.status(405).json({error:'Method not allowed.'})}
  try{
