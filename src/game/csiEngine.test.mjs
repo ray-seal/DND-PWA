@@ -28,7 +28,7 @@ test('case truth, timeline, facts and clue catalogue cannot be rewritten',()=>{
   assert.deepEqual(result.timeline,['20:00','21:00']);
   assert.equal(result.caseFile.culprit,'Bob');
   assert.deepEqual(result.facts,['fact']);
-  assert.deepEqual(result.clues,[{id:'shoe',meaning:'Bob',discovered:true},{id:'watch',meaning:'time discrepancy',discovered:true}]);
+  assert.deepEqual(result.clues,[{id:'shoe',meaning:'Bob',discovered:true,labResults:[]},{id:'watch',meaning:'time discrepancy',discovered:true,labResults:[]}]);
 });
 
 test('case score never becomes negative',()=>{
