@@ -38,6 +38,12 @@ export function AuthProvider({ children }) {
     return current.data?.user ?? null;
   }, []);
 
+  const getAccessToken = useCallback(async () => {
+    if (!neonAuth) return '';
+    const result = await neonAuth.getSession();
+    return result.data?.session?.access_token || '';
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!neonAuth) return;
     const result = await neonAuth.signOut();
@@ -45,7 +51,8 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, loading, error, setError, signIn, signUp, signOut }), [user, loading, error, signIn, signUp, signOut]);
+  const value = useMemo(() => ({ user, loading, error, setError, signIn, signUp, getAccessToken, signOut }),
+    [user, loading, error, signIn, signUp, getAccessToken, signOut]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
