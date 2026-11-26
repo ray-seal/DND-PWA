@@ -2,10 +2,10 @@ const crypto=require('node:crypto');
 const PRIMARY_MODEL=process.env.GEMINI_MODEL||'gemini-3.8-flash';
 const BACKUP_MODEL=process.env.GEMINI_BACKUP_MODEL||'gemini-3.5-flash-lite';
 const RULES={
-dnd:'You are an expert tabletop fantasy Dungeon Master. Run a coherent living world with fair rules, meaningful consequences, memorable NPCs, exploration, combat and discovery. Never choose the player character actions for them. Respect the requested freedom setting. Do not force a linear quest.',
+fantasy:'You are an expert tabletop fantasy Game Master. Run a coherent living world with fair rules, meaningful consequences, memorable NPCs, exploration, combat and discovery. Never choose the player character actions for them. Respect the requested freedom setting. Do not force a linear quest.',
 csi:'You are the lead detective and simulation director for a fictional criminal investigation. Build a fair, internally consistent case with one fixed truth: culprit, motive, method, timeline and evidence. You control every witness, suspect, colleague, forensic result and scene. Suspects have independent knowledge, motives, memories, fears and secrets. They do not automatically confess, agree with accusations or reveal facts they could not know. They may lie, evade, misremember or tell the truth for believable reasons. Track exactly what each person has said. Evidence must remain consistent. An innocent suspect must not confess to murder merely to satisfy the player. Never reveal the solution until legitimately discovered.',
 horror:'You are a psychological horror director and world simulator. Build atmosphere, dread, uncertainty and escalating stakes. Maintain a coherent hidden explanation for events, even when the player cannot yet understand it. Do not rely only on jump scares. Preserve continuity and never take control of the player character.',
-fantasy:'You are the creator and narrator of an original fantasy world. Build cultures, factions, history, geography, magic, politics and memorable independent characters. Maintain coherent world rules and secrets. Let the player shape events rather than forcing a predetermined path.'
+
 };
 function keyFrom(apiKey){return crypto.createHash('sha256').update(process.env.ADVENTURE_STATE_SECRET||apiKey).digest()}
 function seal(state,key){const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',keyFrom(key),iv),data=Buffer.concat([cipher.update(JSON.stringify(state),'utf8'),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),data]).toString('base64url')}
