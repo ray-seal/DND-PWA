@@ -39,18 +39,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   const getAccessToken = useCallback(async () => {
-    if (!neonAuth) return '';
-    // Managed Neon Auth's default client exposes the external API JWT via token().
-    // getSession() primarily restores the browser session and may not include an
-    // access_token in every SDK build.
-    if (typeof neonAuth.token === 'function') {
-      const tokenResult = await neonAuth.token();
-      if (tokenResult.error) throw new Error(tokenResult.error.message || 'Could not retrieve account token.');
-      if (tokenResult.data?.token) return tokenResult.data.token;
+    if (!neonAuth) throw new Error('Account service is not configured.');
+    // @neondatabase/auth exposes getJWTToken() on the public client.
+    // getSession().session.token is an opaque cookie/session identifier, not a JWT.
+    if (typeof neonAuth.getJWTToken !== 'function') {
+      throw new Error('This StoryFoundry build cannot retrieve an account access token. Please refresh after the update.');
     }
-    const result = await neonAuth.getSession();
-    if (result.error) throw new Error(result.error.message || 'Could not restore account session.');
-    return result.data?.session?.access_token || '';
+    const token = await neonAuth.getJWTToken();
+    if (!token) throw new Error('Your account session could not provide an access token. Please sign out and back in.');
+    return token;
   }, []);
 
   const signOut = useCallback(async () => {
