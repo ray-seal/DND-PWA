@@ -11,13 +11,9 @@ export function createCharacter(input) {
     name: String(input.name || 'Unnamed Adventurer').trim().slice(0, 60),
     species: String(input.species || ''),
     className: String(input.className || 'Adventurer'),
-    level,
-    xp: Number(input.xp) || 0,
-    abilities,
+    level, xp: Number(input.xp) || 0, abilities,
     hp: Math.min(maxHp, Math.max(0, Number(input.hp ?? maxHp))),
-    maxHp,
-    ac: Math.max(1, Math.min(40, Number(input.ac) || 10)),
-    hitDie,
+    maxHp, ac: Math.max(1, Math.min(40, Number(input.ac) || 10)), hitDie,
     proficiencyBonus: proficiencyBonus(level),
     proficiencies: Array.isArray(input.proficiencies) ? [...new Set(input.proficiencies)] : [],
     savingThrowProficiencies: Array.isArray(input.savingThrowProficiencies) ? [...new Set(input.savingThrowProficiencies)] : [],
@@ -27,15 +23,12 @@ export function createCharacter(input) {
   };
   return validateCharacter(character);
 }
-
 export function characterSummary(character) {
   validateCharacter(character);
   return {
-    id: character.id, name: character.name, className: character.className,
-    species: character.species, level: character.level, xp: character.xp,
-    proficiencyBonus: proficiencyBonus(character.level),
-    abilities: Object.fromEntries(Object.entries(character.abilities).map(([key, score]) => [key, { score, modifier: abilityModifier(score) }])),
-    hp: character.hp, maxHp: character.maxHp, ac: character.ac,
-    equipment: character.equipment, spells: character.spells
+    id:character.id,name:character.name,className:character.className,species:character.species,
+    level:character.level,xp:character.xp,proficiencyBonus:proficiencyBonus(character.level),
+    abilities:Object.fromEntries(Object.entries(character.abilities).map(([key,score])=>[key,{score,modifier:abilityModifier(score)}])),
+    hp:character.hp,maxHp:character.maxHp,ac:character.ac,equipment:character.equipment,spells:character.spells
   };
 }
