@@ -1,16 +1,16 @@
 export const DND_CLASS_RULES = Object.freeze({
  Barbarian:{hitDie:12, saves:['str','con'], armour:'unarmoured-barbarian', starterArmour:'Unarmoured', weapon:'Greataxe', slots:[0,0,0,0,0,0,0,0,0]},
  Bard:{hitDie:8,saves:['dex','cha'],armour:'light',starterArmour:'Leather armour',weapon:'Rapier',slots:[2,3,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22]},
- Cleric:{hitDie:8,saves:['wis','cha'],armour:'medium',starterArmour:'Scale mail',weapon:'Mace',slots:[2,3,4,4,4,4,4,4,4]},
- Druid:{hitDie:8,saves:['int','wis'],armour:'medium',starterArmour:'Leather armour',weapon:'Scimitar',slots:[2,3,4,4,4,4,4,4,4]},
+ Cleric:{hitDie:8,saves:['wis','cha'],armour:'medium',starterArmour:'Scale mail',weapon:'Mace',slots:[2,3,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22]},
+ Druid:{hitDie:8,saves:['int','wis'],armour:'medium',starterArmour:'Leather armour',weapon:'Scimitar',slots:[2,3,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22]},
  Fighter:{hitDie:10,saves:['str','con'],armour:'heavy',starterArmour:'Chain mail',weapon:'Longsword',slots:[0,0,0,0,0,0,0,0,0]},
  Monk:{hitDie:8,saves:['str','dex'],armour:'unarmoured-monk',starterArmour:'Unarmoured',weapon:'Shortsword',slots:[0,0,0,0,0,0,0,0,0]},
  Paladin:{hitDie:10,saves:['wis','cha'],armour:'heavy',starterArmour:'Chain mail',weapon:'Longsword',slots:[0,2,3,3,4,4,4,4,6,6,6,6,7,7,8,8,8,8,9,9]},
  Ranger:{hitDie:10,saves:['str','dex'],armour:'medium',starterArmour:'Scale mail',weapon:'Longbow',slots:[0,2,3,3,4,4,4,4,6,6,6,6,7,7,8,8,8,8,9,9]},
  Rogue:{hitDie:8,saves:['dex','int'],armour:'light',starterArmour:'Leather armour',weapon:'Rapier',slots:[0,0,0,0,0,0,0,0,0]},
- Sorcerer:{hitDie:6,saves:['con','cha'],armour:'none',starterArmour:'Unarmoured',weapon:'Dagger',slots:[2,3,4,4,4,4,4,4,4]},
+ Sorcerer:{hitDie:6,saves:['con','cha'],armour:'none',starterArmour:'Unarmoured',weapon:'Dagger',slots:[2,3,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22]},
  Warlock:{hitDie:8,saves:['wis','cha'],armour:'light',starterArmour:'Leather armour',weapon:'Light crossbow',slots:[1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]},
- Wizard:{hitDie:6,saves:['int','wis'],armour:'none',starterArmour:'Unarmoured',weapon:'Quarterstaff',slots:[2,3,4,4,4,4,4,4,4]}
+ Wizard:{hitDie:6,saves:['int','wis'],armour:'none',starterArmour:'Unarmoured',weapon:'Quarterstaff',slots:[2,3,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22]}
 });
 const ARMOUR = {
  'Unarmoured':{type:'none',ac:10},
@@ -28,7 +28,8 @@ const ARMOUR = {
 };
 export function abilityMod(score){return Math.floor((Number(score)-10)/2)}
 const SPECIES_BONUSES = {Human:{str:1,dex:1,con:1,int:1,wis:1,cha:1},Elf:{dex:2},Dwarf:{con:2},Halfling:{dex:2},Dragonborn:{str:2,cha:1},Gnome:{int:2},'Half-Elf':{cha:2},'Half-Orc':{str:2,con:1},Tiefling:{int:1,cha:2},Other:{}};
-export function speciesBaseAbilityScores(species,final){ const bonus=SPECIES_BONUSES[species]||{}; return Object.fromEntries(['str','dex','con','int','wis','cha'].map(k=>[k,Math.max(3,(Number(final?.[k])||10)-(bonus[k]||0))]));}\nexport function speciesAbilityScores(species,base){
+export function speciesBaseAbilityScores(species,final){ const bonus=SPECIES_BONUSES[species]||{}; return Object.fromEntries(['str','dex','con','int','wis','cha'].map(k=>[k,Math.max(3,(Number(final?.[k])||10)-(bonus[k]||0))]));}
+export function speciesAbilityScores(species,base){
  const bonus=SPECIES_BONUSES[species]||{};
  return Object.fromEntries(['str','dex','con','int','wis','cha'].map(k=>[k,Math.min(20,(Number(base?.[k])||10)+(bonus[k]||0))]));
 }
