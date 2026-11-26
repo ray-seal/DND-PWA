@@ -44,5 +44,5 @@ export function spellSlotProgression(className,level){
  if(!['Wizard','Sorcerer','Bard','Cleric','Druid','Paladin','Ranger'].includes(className))return null;
  const full={Wizard:[2,3,4,4,4,4,4,4,4],Sorcerer:[2,3,4,4,4,4,4,4,4],Bard:[2,3,4,4,4,4,4,4,4],Cleric:[2,3,4,4,4,4,4,4,4],Druid:[2,3,4,4,4,4,4,4,4]};
  if(className==='Paladin'||className==='Ranger')return level<2?[]:[Math.floor(level/2)];
- return (DND_SPELL_SLOTS.Wizard[Math.max(0,Math.min(19,Math.floor(level)-1))]||[]).filter(n=>n>0);
+ return (DND_SPELL_SLOTS.Wizard[Math.max(0,Math.min(19,Math.floor(level)-1))]||[]).slice(1).filter(n=>n>0);
 }
