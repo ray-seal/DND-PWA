@@ -40,14 +40,20 @@ export function AuthProvider({ children }) {
 
   const getAccessToken = useCallback(async () => {
     if (!neonAuth) throw new Error('Account service is not configured.');
-    // @neondatabase/auth exposes getJWTToken() on the public client.
-    // getSession().session.token is an opaque cookie/session identifier, not a JWT.
-    if (typeof neonAuth.getJWTToken !== 'function') {
-      throw new Error('This StoryFoundry build cannot retrieve an account access token. Please refresh after the update.');
+    // Ask Managed Neon Auth for its short-lived API JWT using the existing
+    // HttpOnly browser session cookie. The cookie itself is not a bearer JWT.
+    const authUrl = import.meta.env.VITE_NEON_AUTH_URL;
+    const response = await fetch(`${authUrl.replace(/\\/$/, '')}/token`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || typeof result.token !== 'string' || !result.token) {
+      throw new Error(result.message || result.error || 'Your account session could not provide an API token. Please sign out and back in.');
     }
-    const token = await neonAuth.getJWTToken();
-    if (!token) throw new Error('Your account session could not provide an access token. Please sign out and back in.');
-    return token;
+    return result.token;
   }, []);
 
   const signOut = useCallback(async () => {
