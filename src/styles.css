@@ -11,3 +11,22 @@
 .account-bar button{border:1px solid #ffffff25;background:#1b1c25;color:#e6d8c4;border-radius:5px;padding:7px 10px;font-size:10px}
 
 .character-vault-link{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;max-width:520px;margin:0 auto 25px;padding:15px 18px;background:#29251f;border:1px solid #8e7858;border-radius:7px;color:#e2c38e;font:11px 'DM Mono',monospace;letter-spacing:.6px;cursor:pointer}.character-vault-link span{font-size:9px;color:#b9ad9a}@media(max-width:520px){.character-vault-link{font-size:10px}.character-vault-link span{font-size:8px}}
+
+.evidence-desk,.case-report-panel{margin:24px 0;padding:22px;background:#1b1c25;border:1px solid #ffffff20;border-radius:9px}
+.desk-heading,.inspector-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.desk-heading h3,.case-report-panel h3{font:600 25px 'Playfair Display',serif;margin:6px 0 14px}
+.desk-heading>span,.muted{font-size:11px;color:#9995a1;line-height:1.65}
+.evidence-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px}
+.evidence-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:14px;background:#111219;border:1px solid #ffffff20;border-radius:7px;color:#eee;text-align:left}
+.evidence-card>span{font-size:24px}.evidence-card strong{font-size:12px}.evidence-card small,.inspector-top small{font:9px 'DM Mono';color:#aaa}
+.evidence-card.selected{border-color:#d3b37d;background:#29251f}
+.evidence-inspector{margin-top:18px;padding:18px;background:#111219;border-radius:7px;border:1px solid #ffffff20}
+.inspector-top h4{font:600 20px 'Playfair Display',serif;margin:5px 0}
+.inspector-top button,.inspect-controls button{border:1px solid #ffffff25;background:#24232d;color:#e6d8c4;padding:8px 10px;border-radius:5px;font-size:10px}
+.evidence-inspector>p{font-size:12px;line-height:1.7;color:#ddd}
+.footprint-stage{width:min(100%,280px);height:280px;margin:18px auto;display:grid;place-items:center;background:radial-gradient(ellipse,#383329,#15151a 70%);border:1px solid #ffffff22;border-radius:8px;overflow:hidden}
+.footprint-stage svg{height:90%;max-width:90%;transform:rotate(var(--rotation,0deg));filter:drop-shadow(0 3px 5px #0008)}
+.inspect-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.lab-result{padding:10px;background:#202c29;border-left:3px solid #83c99a;border-radius:3px}
+.case-report-panel form{margin-top:15px}.case-result{padding:16px;background:#24251f;border:1px solid #8b7957;border-radius:7px;color:#e6d8c4;font-size:12px;line-height:1.8}.case-result strong{font:600 22px 'Playfair Display',serif;color:#d9bd91}
+.active-tool{color:#d9bd91!important}
