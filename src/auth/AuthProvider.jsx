@@ -40,7 +40,16 @@ export function AuthProvider({ children }) {
 
   const getAccessToken = useCallback(async () => {
     if (!neonAuth) return '';
+    // Managed Neon Auth's default client exposes the external API JWT via token().
+    // getSession() primarily restores the browser session and may not include an
+    // access_token in every SDK build.
+    if (typeof neonAuth.token === 'function') {
+      const tokenResult = await neonAuth.token();
+      if (tokenResult.error) throw new Error(tokenResult.error.message || 'Could not retrieve account token.');
+      if (tokenResult.data?.token) return tokenResult.data.token;
+    }
     const result = await neonAuth.getSession();
+    if (result.error) throw new Error(result.error.message || 'Could not restore account session.');
     return result.data?.session?.access_token || '';
   }, []);
 
