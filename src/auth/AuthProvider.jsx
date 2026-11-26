@@ -43,7 +43,8 @@ export function AuthProvider({ children }) {
     // Ask Managed Neon Auth for its short-lived API JWT using the existing
     // HttpOnly browser session cookie. The cookie itself is not a bearer JWT.
     const authUrl = import.meta.env.VITE_NEON_AUTH_URL;
-    const response = await fetch(`${authUrl.replace(/\\/$/, '')}/token`, {
+    const baseUrl = authUrl.endsWith('/') ? authUrl.slice(0, -1) : authUrl;
+    const response = await fetch(`${baseUrl}/token`, {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: 'application/json' },
