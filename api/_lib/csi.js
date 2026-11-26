@@ -71,9 +71,7 @@ function calculateCaseReview(state, suspectId, reasoning = '') {
   const deductions = (Number(assistance.gentle) || 0) * 10
     + (Number(assistance.directional) || 0) * 25
     + (Number(assistance.direct) || 0) * 50;
-  const xpAwarded = correct && hasEvidence
-    ? Math.max(25, Math.min(250, earned - deductions))
-    : Math.max(0, Math.min(75, earned - deductions));
+  const xpAwarded = correct && hasEvidence ? Math.max(25, Math.min(250, earned - deductions)) : 0;
   return {
     correct, hasEvidence, identifiedSuspect: String(suspectId),
     correctSuspectId: correct ? state.caseFile.culpritId : null,
