@@ -92,9 +92,9 @@ if(body.action==='case_review'){
 const state=unseal(body.stateToken,apiKey);if(state.experience!=='csi'||!state.caseFile)return res.status(400).json({error:'This is not a CSI case.'});
 if(state.csiReport)return res.status(200).json({report:state.csiReport,stateToken:body.stateToken,alreadyReviewed:true});
 const suspectId=String(body.suspectId||''),reasoning=String(body.reasoning||'').trim().slice(0,3000);
-const report=calculateCaseReview(state,suspectId,reasoning);
-state.csiReport=report;
-const award=state.characterId&&state.progressionSessionId?{type:'case_report',key:'case-report-'+state.progressionSessionId,xp:xpAwarded}:null;
+if(!(state.characters||[]).some(person=>String(person.role||'').toLowerCase()==='suspect'&&person.id===suspectId))return res.status(400).json({error:'Choose a suspect from this investigation.'});const report=calculateCaseReview(state,suspectId,reasoning);
+if(report.verdict==='CASE SOLVED')state.csiReport=report;
+const award=report.verdict==='CASE SOLVED'&&state.characterId&&state.progressionSessionId?{type:'case_report',key:'case-report-'+state.progressionSessionId,xp:report.xpAwarded}:null;
 return res.status(200).json({report,awardToken:signProgressionAward(award,state,apiKey),progressionSessionId:state.progressionSessionId,stateToken:seal(state,apiKey)});
 }
 if(body.action==='turn'){
