@@ -1,17 +1,17 @@
 const DND_THRESHOLDS = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
-const DETECTIVE_THRESHOLDS = [0,100,250,450,700,1000,1400,1900,2500,3200,4000,4900,5900,7000,8200,9500,10900,12400,14000,15700];
+const DETECTIVE_THRESHOLDS = [0,100,250,450,700,1000,1400,1900,2500,3200,4000,4900,5900,7000,8200,9500,10900,12400,14000,15700];\nconst HORROR_THRESHOLDS = [0,100,250,500,850,1300,1900,2600,3500,4600,5900,7400,9100,11000,13100,15400,17900,20600,23500,26600];
 export function levelForProgression(xp, track='dnd') {
   if (!Number.isInteger(xp) || xp < 0) throw new RangeError('XP must be a non-negative integer.');
-  const thresholds = track === 'detective' ? DETECTIVE_THRESHOLDS : DND_THRESHOLDS;
+  const thresholds = track === 'detective' ? DETECTIVE_THRESHOLDS : track === 'horror' ? HORROR_THRESHOLDS : DND_THRESHOLDS;
   let level = 1;
   for (let i=1;i<thresholds.length;i++) if (xp >= thresholds[i]) level=i+1;
   return level;
 }
 export function progressionTrackFor(character) {
-  return character?.experienceType === 'detective' || character?.genre === 'csi' ? 'detective' : 'dnd';
+  if (character?.experienceType === 'detective' || character?.genre === 'csi') return 'detective';\n  if (character?.experienceType === 'horror' || character?.genre === 'horror') return 'horror';\n  return 'fantasy';
 }
 export function progressSummary(character) {
-  const track=progressionTrackFor(character), thresholds=track==='detective'?DETECTIVE_THRESHOLDS:DND_THRESHOLDS;
+  const track=progressionTrackFor(character), thresholds=track==='detective'?DETECTIVE_THRESHOLDS:track==='horror'?HORROR_THRESHOLDS:DND_THRESHOLDS;
   const level=levelForProgression(Number(character.xp)||0,track);
   const next=thresholds[level] ?? null;
   const current=thresholds[level-1] ?? 0;
@@ -20,4 +20,4 @@ export function progressSummary(character) {
 export const DETECTIVE_SKILL_GROUPS = Object.freeze({
   investigation:['Observation','Evidence handling','Scene examination','Deduction','Research','Digital forensics','Interviewing','Interrogation','Empathy','Situational awareness']
 });
-export const DETECTIVE_THRESHOLDS_FOR_TESTS = DETECTIVE_THRESHOLDS;
+export const DETECTIVE_THRESHOLDS_FOR_TESTS = DETECTIVE_THRESHOLDS;\nexport const HORROR_THRESHOLDS_FOR_TESTS = HORROR_THRESHOLDS;
