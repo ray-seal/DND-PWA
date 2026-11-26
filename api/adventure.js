@@ -90,7 +90,7 @@ return res.status(200).json({title:String(out.opening.title||'A new beginning').
 }
 if(body.action==='case_review'){
 const state=unseal(body.stateToken,apiKey);if(state.experience!=='csi'||!state.caseFile)return res.status(400).json({error:'This is not a CSI case.'});
-if(state.csiReport)return res.status(200).json({report:state.csiReport,stateToken:body.stateToken,alreadyReviewed:true});
+if(state.csiReport){const priorAward={type:'case_report',key:'case-report-'+state.progressionSessionId,xp:state.csiReport.xpAwarded};return res.status(200).json({report:state.csiReport,awardToken:signProgressionAward(priorAward,state,apiKey),progressionSessionId:state.progressionSessionId,stateToken:body.stateToken,alreadyReviewed:true});}
 const suspectId=String(body.suspectId||''),reasoning=String(body.reasoning||'').trim().slice(0,3000);
 if(!(state.characters||[]).some(person=>String(person.role||'').toLowerCase()==='suspect'&&person.id===suspectId))return res.status(400).json({error:'Choose a suspect from this investigation.'});const report=calculateCaseReview(state,suspectId,reasoning);
 if(report.verdict==='CASE SOLVED')state.csiReport=report;
