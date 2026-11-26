@@ -16,7 +16,7 @@ async function verifyUser(req){
   const base=process.env.NEON_AUTH_BASE_URL, jwks=process.env.NEON_AUTH_JWKS_URL;
   if(!base||!jwks)throw new Error('Neon Auth is not configured on the server.');
   const {createRemoteJWKSet,jwtVerify}=await import('jose');
-  const {payload}=await jwtVerify(token,createRemoteJWKSet(new URL(jwks)),{issuer:base,algorithms:['EdDSA']});
+  const {payload}=await jwtVerify(token,createRemoteJWKSet(new URL(jwks)),{issuer:new URL(base).origin,algorithms:['EdDSA']});
   if(!payload.sub||!/^[0-9a-f-]{36}$/i.test(String(payload.sub))||payload.role!=='authenticated')
     throw Object.assign(new Error('A valid StoryFoundry account is required.'),{status:403});
   return {id:String(payload.sub),email:typeof payload.email==='string'?payload.email:''};
