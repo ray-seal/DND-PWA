@@ -5,3 +5,8 @@ dist
 .env.*.local
 .DS_Store
 package-lock.json
+
+# Neon connection secrets
+.env
+.env.*
+!.env.example

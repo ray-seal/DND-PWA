@@ -38,3 +38,30 @@ Add the same GEMINI_API_KEY value used by Companion OS to this Vercel project's 
 3. Add cloud saves, player accounts and multiplayer sessions.
 4. Add dedicated character interviews, evidence examination and investigation tools.
 5. Expand experience packs and custom scenario creation.
+
+
+## Persistent tabletop RPG foundation
+
+The D&D roadmap is implemented as a separate, reviewable feature branch rather than being turned on in the live narrative modes.
+
+- Deterministic D20 rules primitives live in `src/game/rules.js`, with unit tests run by `npm test`.
+- Character sheet creation and derived statistics live in `src/game/character.js`.
+- Neon Managed Better Auth is isolated in `src/auth/`.
+- Authenticated server endpoints are `/api/characters` and `/api/campaigns`. They verify the Neon-issued EdDSA JWT against the branch JWKS before running parameterised owner-scoped queries.
+- Tables cover reusable characters, campaigns, membership, campaign-specific character snapshots, append-only game events and invitations. Every public game table has RLS enabled with authenticated ownership/membership policies; anonymous role has no character-table read access.
+
+### Neon environments
+
+StoryFoundry uses its own Neon project in AWS Europe Central (Frankfurt). It does not use or share CLIVE's database, Auth configuration, API credentials or user records.
+
+- Neon project: `StoryFoundry`.
+- Default branch: `main` (reserved for future production persistence).
+- Preview branch: `preview-tabletop-rpg` (used by the tabletop feature branch).
+- Managed Better Auth: enabled separately on each branch.
+- Vercel Preview environment variables are branch-scoped to `feature/tabletop-rpg-foundation`; production variables are not changed by this feature branch.
+
+Required server variables: `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`. Browser Auth uses `VITE_NEON_AUTH_URL`. Never put the database URL or Gemini key in client-side variables.
+
+### Current limits
+
+This is the account and persistence foundation, not the finished multiplayer tabletop experience. The character/campaign endpoints are initial CRUD foundations; the full character-sheet UI, campaign scene editor, combat encounter view, turn event pipeline, invitation acceptance flow, AI player seat orchestration and reward validation are still roadmap items. Keep the current local saves for crime, horror and fantasy until their account migration is designed separately.
