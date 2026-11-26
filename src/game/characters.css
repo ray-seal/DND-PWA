@@ -13,3 +13,5 @@
 .ability-roll-results em{font-style:normal;font-size:.6rem;color:var(--muted,#aaa)}
 .ability-cap-note{display:block;margin-top:10px;color:var(--muted,#aaa);font-size:.75rem}
 @media(max-width:420px){.ability-roll-results{grid-template-columns:repeat(2,minmax(0,1fr))}.ability-heading{display:block}.roll-abilities{margin-top:8px}}
+
+.ability-card select{width:100%;max-width:110px;background:#111219;border:1px solid #45404b;color:#eee;text-align:center;padding:7px 3px;border-radius:5px;font-size:11px}.ability-score-readonly{font:600 20px 'Playfair Display',serif;color:#eee;padding:8px}.skill-option input:disabled{opacity:.35}.skill-option:has(input:disabled){opacity:.45}
