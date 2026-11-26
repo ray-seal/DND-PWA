@@ -1,3 +1,4 @@
+const applyCors=require('./_lib/cors');
 const crypto=require('node:crypto');
 const PRIMARY_MODEL=process.env.GEMINI_MODEL||'gemini-3.8-flash';
 const BACKUP_MODEL=process.env.GEMINI_BACKUP_MODEL||'gemini-3.5-flash-lite';
@@ -73,6 +74,7 @@ return 'You are STORYFOUNDRY, an AI experience director. You run an interactive 
 }
 function validSessionShape(s){return !!s&&typeof s==='object'&&typeof s.experience==='string'&&Array.isArray(s.characters)&&Array.isArray(s.facts)&&Array.isArray(s.clues)&&Array.isArray(s.history)&&typeof s.truth==='string'&&typeof s.location==='string'}
 module.exports=async function(req,res){
+ if(applyCors(req,res))return;
 if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'Use POST for an adventure.'})}
 const apiKey=process.env.GEMINI_API_KEY;if(!apiKey)return res.status(503).json({error:'Gemini is not connected yet. Add GEMINI_API_KEY to the Vercel project environment.'});
 try{const body=typeof req.body==='string'?JSON.parse(req.body):(req.body||{});
