@@ -1,6 +1,6 @@
 const applyCors=require('./_lib/cors');
 const crypto=require('node:crypto');
-const {preserveCaseTruth,recordAssistance}=require('./_lib/csi');
+const {preserveCaseTruth,recordAssistance,calculateCaseReview}=require('./_lib/csi');
 const PRIMARY_MODEL=process.env.GEMINI_MODEL||'gemini-3.8-flash';
 const BACKUP_MODEL=process.env.GEMINI_BACKUP_MODEL||'gemini-3.5-flash-lite';
 const RULES={
@@ -91,12 +91,8 @@ return res.status(200).json({title:String(out.opening.title||'A new beginning').
 if(body.action==='case_review'){
 const state=unseal(body.stateToken,apiKey);if(state.experience!=='csi'||!state.caseFile)return res.status(400).json({error:'This is not a CSI case.'});
 if(state.csiReport)return res.status(200).json({report:state.csiReport,stateToken:body.stateToken,alreadyReviewed:true});
-const suspectId=String(body.suspectId||''),reasoning=String(body.reasoning||'').trim().slice(0,3000),discovered=(state.clues||[]).filter(x=>x.discovered),catalogue=state.caseFile.evidenceCatalogue||[],validIds=new Set(catalogue.map(x=>x.id)),verified=discovered.filter(x=>validIds.has(x.id));
-const correct=suspectId===String(state.caseFile.culpritId),hasEvidence=verified.length>0,assistance=state.csiAssistance||{gentle:0,directional:0,direct:0};
-const earned=verified.length*30+(discovered.length-verified.length)*10+(hasEvidence?75:0)+(correct&&reasoning.length>=30?150:0);
-const deductions=(Number(assistance.gentle)||0)*10+(Number(assistance.directional)||0)*25+(Number(assistance.direct)||0)*50;
-const xpAwarded=correct&&hasEvidence?Math.max(25,Math.min(250,earned-deductions)):Math.max(0,Math.min(75,earned-deductions));
-const report={correct,hasEvidence,identifiedSuspect:suspectId,correctSuspectId:correct?state.caseFile.culpritId:null,reasoning,discoveredEvidence:discovered.length,verifiedEvidence:verified.length,assistance:{...assistance},xpEarned:earned,xpDeducted:deductions,xpAwarded,verdict:correct&&hasEvidence?'CASE SOLVED':'CASE UNRESOLVED',summary:correct&&hasEvidence?'Your conclusion matches the sealed case facts and is supported by discovered evidence.':correct?'You identified the correct suspect, but have not established the case with discovered evidence.':'Your conclusion does not match the established case facts. The investigation remains open.'};
+const suspectId=String(body.suspectId||''),reasoning=String(body.reasoning||'').trim().slice(0,3000);
+const report=calculateCaseReview(state,suspectId,reasoning);
 state.csiReport=report;
 const award=state.characterId&&state.progressionSessionId?{type:'case_report',key:'case-report-'+state.progressionSessionId,xp:xpAwarded}:null;
 return res.status(200).json({report,awardToken:signProgressionAward(award,state,apiKey),progressionSessionId:state.progressionSessionId,stateToken:seal(state,apiKey)});
