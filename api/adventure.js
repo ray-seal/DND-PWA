@@ -14,17 +14,19 @@ function unseal(token,key){if(typeof token!=='string'||token.length>180000)throw
 function parseJson(s){return JSON.parse(String(s||'').trim().replace(/^\u0060{3}(?:json)?\s*/i,'').replace(/\s*\u0060{3}$/,''))}
 async function gemini(key,instruction,contents,temp){
   let last;
+  let repairText=null;
   const models=[...new Set([PRIMARY_MODEL,BACKUP_MODEL])];
   for(const model of models){
     for(let attempt=0;attempt<2;attempt++){
       try{
         const maxOutputTokens=attempt===0?8192:12288;
+        const requestContents=repairText?[...contents,{role:'user',parts:[{text:'Your previous response was not valid complete JSON. Repair it and return ONLY one complete valid JSON object matching the original requested schema. Do not add commentary. Previous response:\\n'+repairText.slice(0,24000)}]}]:contents;
         const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{
           method:'POST',
           headers:{'Content-Type':'application/json','x-goog-api-key':key},
           body:JSON.stringify({
             systemInstruction:{parts:[{text:instruction}]},
-            contents,
+            contents:requestContents,
             generationConfig:{temperature:temp,maxOutputTokens,responseMimeType:'application/json'}
           }),
           signal:AbortSignal.timeout(22000)
@@ -41,9 +43,10 @@ async function gemini(key,instruction,contents,temp){
         if(!responseText)throw Error(candidate?.finishReason==='MAX_TOKENS'?'Gemini reached its response limit before finishing.':'Gemini returned an empty response.');
         try{return parseJson(responseText)}
         catch(parseError){
+          repairText=responseText;
           last=Error('Gemini returned incomplete JSON ('+(candidate?.finishReason||'unknown finish reason')+').');
           if(attempt===1)break;
-          // Retry once with a larger response budget instead of passing truncated state to the game.
+          // Retry once with a larger response budget and an explicit JSON-repair instruction.
         }
       }catch(e){
         last=e;
