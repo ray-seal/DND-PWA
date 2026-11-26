@@ -11,7 +11,47 @@ function keyFrom(apiKey){return crypto.createHash('sha256').update(process.env.A
 function seal(state,key){const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',keyFrom(key),iv),data=Buffer.concat([cipher.update(JSON.stringify(state),'utf8'),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),data]).toString('base64url')}
 function unseal(token,key){if(typeof token!=='string'||token.length>180000)throw Error('Invalid adventure save.');const b=Buffer.from(token,'base64url');if(b.length<29)throw Error('Invalid adventure save.');const d=crypto.createDecipheriv('aes-256-gcm',keyFrom(key),b.subarray(0,12));d.setAuthTag(b.subarray(12,28));return JSON.parse(Buffer.concat([d.update(b.subarray(28)),d.final()]).toString('utf8'))}
 function parseJson(s){return JSON.parse(String(s||'').trim().replace(/^\u0060{3}(?:json)?\s*/i,'').replace(/\s*\u0060{3}$/,''))}
-async function gemini(key,instruction,contents,temp){let last;for(const model of [...new Set([PRIMARY_MODEL,BACKUP_MODEL])]){try{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:instruction}]},contents,generationConfig:{temperature:temp,maxOutputTokens:2600,responseMimeType:'application/json'}}),signal:AbortSignal.timeout(22000)});const data=await r.json().catch(()=>({}));if(r.ok){const text=data?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim();if(!text)throw Error('Gemini returned an empty response.');return parseJson(text)}if(![429,500,502,503,504].includes(r.status))throw Error(data?.error?.message||'Gemini request failed.');last=Error(data?.error?.message||'Gemini is busy.')}catch(e){last=e}}throw last||Error('Gemini is temporarily unavailable.')}
+async function gemini(key,instruction,contents,temp){
+  let last;
+  const models=[...new Set([PRIMARY_MODEL,BACKUP_MODEL])];
+  for(const model of models){
+    for(let attempt=0;attempt<2;attempt++){
+      try{
+        const maxOutputTokens=attempt===0?8192:12288;
+        const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-goog-api-key':key},
+          body:JSON.stringify({
+            systemInstruction:{parts:[{text:instruction}]},
+            contents,
+            generationConfig:{temperature:temp,maxOutputTokens,responseMimeType:'application/json'}
+          }),
+          signal:AbortSignal.timeout(22000)
+        });
+        const data=await r.json().catch(()=>({}));
+        if(!r.ok){
+          const message=data?.error?.message||'Gemini request failed.';
+          if(![429,500,502,503,504].includes(r.status))throw Error(message);
+          last=Error(message);
+          break;
+        }
+        const candidate=data?.candidates?.[0];
+        const responseText=candidate?.content?.parts?.map(p=>p.text||'').join('').trim();
+        if(!responseText)throw Error(candidate?.finishReason==='MAX_TOKENS'?'Gemini reached its response limit before finishing.':'Gemini returned an empty response.');
+        try{return parseJson(responseText)}
+        catch(parseError){
+          last=Error('Gemini returned incomplete JSON ('+(candidate?.finishReason||'unknown finish reason')+').');
+          if(attempt===1)break;
+          // Retry once with a larger response budget instead of passing truncated state to the game.
+        }
+      }catch(e){
+        last=e;
+        if(attempt===1)break;
+      }
+    }
+  }
+  throw last||Error('Gemini is temporarily unavailable.');
+}
 function brief(a){return ['Experience: '+a.experienceName+' ('+a.experience+')','Player name: '+(a.playerName||'Not supplied'),'Player role: '+(a.role||'Choose a fitting role'),'Player premise: '+(a.premise||'Invent something fitting'),'Desired duration: '+a.duration,'Freedom: '+a.freedom,'Difficulty: '+a.difficulty,'Storytelling style: '+a.tone,'World flavour: '+a.realism,'Players: '+a.players,'Hint preference: '+a.hintStyle].join('\n')}
 function director(id){
 return 'You are STORYFOUNDRY, an AI experience director. You run an interactive experience and portray its world and every character. Your storytelling should feel authored, surprising and alive.\n'+
