@@ -50,47 +50,57 @@ const SKILLS = Object.freeze({
 function rollD20(randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min) {
   return randomInt(1, 20);
 }
-function abilityCheck(character, ability, { proficient = false, dc, randomInt } = {}) {
+function rollD20Result(randomInt, { advantage = false, disadvantage = false } = {}) {
+  const rolls = advantage === disadvantage ? [rollD20(randomInt)] : [rollD20(randomInt), rollD20(randomInt)];
+  const die = advantage ? Math.max(...rolls) : disadvantage ? Math.min(...rolls) : rolls[0];
+  return { die, rolls, mode: advantage === disadvantage ? "normal" : advantage ? "advantage" : "disadvantage" };
+}
+function abilityCheck(character, ability, options = {}) {
+  const { proficient = false, dc, randomInt } = options;
   validateCharacter(character);
   if (!ABILITIES.includes(ability)) throw new RangeError(`Unknown ability: ${ability}`);
-  const die = rollD20(randomInt);
+  const { die, rolls, mode } = rollD20Result(randomInt, options);
   const total = die + abilityModifier(character.abilities[ability]) + (proficient ? proficiencyBonus(character.level) : 0);
-  return { kind:"ability_check", die, modifier:abilityModifier(character.abilities[ability]), proficiency:proficient ? proficiencyBonus(character.level) : 0, total, dc:dc ?? null, success:dc == null ? null : total >= dc, critical:die === 20, fumble:die === 1 };
+  return { kind:"ability_check", die, rolls, mode, modifier:abilityModifier(character.abilities[ability]), proficiency:proficient ? proficiencyBonus(character.level) : 0, total, dc:dc ?? null, success:dc == null ? null : total >= dc, critical:die === 20, fumble:die === 1 };
 }
-function skillCheck(character, skill, { dc, randomInt } = {}) {
+function skillCheck(character, skill, options = {}) {
+  const { dc, randomInt } = options;
   const ability = SKILLS[skill];
   if (!ability) throw new RangeError(`Unknown skill: ${skill}`);
-  const die = rollD20(randomInt);
+  const { die, rolls, mode } = rollD20Result(randomInt, options);
   const modifier = skillModifier(character, skill);
   const total = die + modifier;
-  return { kind:"skill_check", skill, ability, die, modifier, total, dc:dc ?? null, success:dc == null ? null : total >= dc, critical:die === 20, fumble:die === 1 };
+  return { kind:"skill_check", skill, ability, die, rolls, mode, modifier, total, dc:dc ?? null, success:dc == null ? null : total >= dc, critical:die === 20, fumble:die === 1 };
 }
-function savingThrow(character, ability, { dc, randomInt } = {}) {
+function savingThrow(character, ability, options = {}) {
+  const { dc, randomInt } = options;
   validateCharacter(character);
   if (!ABILITIES.includes(ability)) throw new RangeError(`Unknown ability: ${ability}`);
   const proficient = (character.savingThrowProficiencies || []).includes(ability);
-  const die = rollD20(randomInt);
+  const { die, rolls, mode } = rollD20Result(randomInt, options);
   const modifier = abilityModifier(character.abilities[ability]) + (proficient ? proficiencyBonus(character.level) : 0);
   const total = die + modifier;
-  return { kind:"saving_throw", ability, die, modifier, total, dc:dc ?? null, success:dc == null ? null : total >= dc, critical:die === 20, fumble:die === 1 };
+  return { kind:"saving_throw", ability, die, rolls, mode, modifier, total, dc:dc ?? null, success:dc == null ? null : total >= dc, critical:die === 20, fumble:die === 1 };
 }
-function attackRoll(character, ability, targetAc, { randomInt, bonus = 0 } = {}) {
+function attackRoll(character, ability, targetAc, options = {}) {
+  const { randomInt, bonus = 0 } = options;
   validateCharacter(character);
   if (!ABILITIES.includes(ability)) throw new RangeError(`Unknown attack ability: ${ability}`);
   assertInteger(targetAc, "Target AC", 1, 40);
   const proficient = character.attackProficient !== false;
   const proficiency = proficient ? proficiencyBonus(character.level) : 0;
   const modifier = abilityModifier(character.abilities[ability]);
-  const die = rollD20(randomInt);
+  const { die, rolls, mode } = rollD20Result(randomInt, options);
   const total = die + modifier + proficiency + bonus;
   const hit = die === 20 || (die !== 1 && total >= targetAc);
-  return { kind:"attack", die, ability, modifier, proficiency, bonus, total, targetAc, hit, critical:die === 20, fumble:die === 1 };
+  return { kind:"attack", die, rolls, mode, ability, modifier, proficiency, bonus, total, targetAc, hit, critical:die === 20, fumble:die === 1 };
 }
-function initiative(character, { randomInt } = {}) {
+function initiative(character, options = {}) {
   validateCharacter(character);
-  const die = rollD20(randomInt);
+  const { randomInt } = options;
+  const { die, rolls, mode } = rollD20Result(randomInt, options);
   const modifier = abilityModifier(character.abilities.dex);
-  return { kind:"initiative", die, modifier, total:die + modifier };
+  return { kind:"initiative", die, rolls, mode, modifier, total:die + modifier };
 }
 function addExperience(character, amount) {
   validateCharacter(character);
