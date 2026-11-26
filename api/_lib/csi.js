@@ -41,7 +41,7 @@ function preserveCaseTruth(previous, proposed) {
     const proposedById = new Map((Array.isArray(proposed.clues) ? proposed.clues : []).map(clue => [clue.id, clue]));
     next.clues = previous.clues.map(clue => {
       const candidate = proposedById.get(clue.id) || {};
-      return { ...clue, discovered: Boolean(clue.discovered || candidate.discovered) };
+      return { ...clue, discovered: Boolean(clue.discovered || candidate.discovered), labResults: Array.isArray(candidate.labResults) ? candidate.labResults : (clue.labResults || []) };
     });
   }
   if (Array.isArray(previous.facts)) next.facts = previous.facts;
