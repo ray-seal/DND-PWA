@@ -47,6 +47,7 @@ test('case review requires the sealed culprit and discovered evidence to solve',
   const wrong=calculateCaseReview(state,'suspect-a','A different theory.');
   assert.equal(wrong.verdict,'CASE UNRESOLVED');
   assert.equal(wrong.correctSuspectId,null);
+  assert.equal(wrong.xpAwarded,0);
 });
 
 test('free theory discussion stays free while explicit answer requests count as assistance',()=>{
