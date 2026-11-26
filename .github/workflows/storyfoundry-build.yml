@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - rebuild/experience-engine
+      - feature/tabletop-rpg-foundation
   pull_request:
     branches:
       - main
@@ -17,4 +18,5 @@ jobs:
           node-version: 22
       - run: npm install
       - run: node --check api/adventure.js
+      - run: npm test
       - run: npm run build
