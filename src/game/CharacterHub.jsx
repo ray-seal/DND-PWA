@@ -1,0 +1,67 @@
+import React,{useCallback,useEffect,useMemo,useState} from 'react';
+import {useAuth} from '../auth/AuthProvider';
+import {progressSummary,DETECTIVE_SKILL_GROUPS} from './progression';
+import './characters.css';
+
+const ABILITIES=[['str','Strength'],['dex','Dexterity'],['con','Constitution'],['int','Intelligence'],['wis','Wisdom'],['cha','Charisma']];
+const DND_CLASSES=['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard'];
+const SPECIES=['Human','Elf','Dwarf','Halfling','Dragonborn','Gnome','Half-Elf','Half-Orc','Tiefling','Other'];
+const SKILLS=['Acrobatics','Animal Handling','Arcana','Athletics','Deception','History','Insight','Intimidation','Investigation','Medicine','Nature','Perception','Performance','Persuasion','Religion','Sleight of Hand','Stealth','Survival'];
+const blank={name:'',genre:'dnd',className:'Fighter',species:'Human',level:1,xp:0,abilities:{str:10,dex:10,con:10,int:10,wis:10,cha:10},hp:10,maxHp:10,ac:10,skills:[],equipment:[],spells:[],biography:''};
+const detectiveBlank={...blank,genre:'csi',className:'Detective Constable',species:'Human',name:'Detective Sharkbait',abilities:{str:10,dex:12,con:12,int:14,wis:15,cha:13},hp:12,maxHp:12,ac:12,skills:['Observation','Investigation','Interviewing','Deduction']};
+function modifier(score){return Math.floor((Number(score)-10)/2)}
+function Progress({character}){const p=progressSummary(character);return <div className="progress-panel"><div className="progress-head"><strong>{p.track==='detective'?'INVESTIGATIVE CAREER':'ADVENTURER PROGRESSION'}</strong><b>LEVEL {p.level}</b></div><div className="xp-track"><span style={{width:p.progress+'%'}}/></div><small>{p.xp.toLocaleString()} XP {p.nextLevelXp===null?'· MAX LEVEL': '· '+p.xpToNext.toLocaleString()+' XP to level '+(p.level+1)}</small></div>}
+function Stat({label,value,onChange}){return <label className="character-field"><span>{label}</span><input type="number" min="1" max="30" value={value} onChange={e=>onChange(Number(e.target.value))}/></label>}
+export default function CharacterHub({onBack}) {
+ const {getAccessToken}=useAuth();
+ const [characters,setCharacters]=useState([]),[draft,setDraft]=useState(null),[selected,setSelected]=useState(null),[busy,setBusy]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState('');
+ const headers=useCallback(async(extra={})=>({Authorization:'Bearer '+await getAccessToken(),...extra}),[getAccessToken]);
+ const request=useCallback(async(path,options={})=>{const h=await headers(options.body?{'Content-Type':'application/json'}:{});const r=await fetch(path,{...options,headers:h});const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed');return d},[headers]);
+ const refresh=useCallback(async()=>{setBusy(true);try{const d=await request('/api/characters');setCharacters(d.characters||[])}catch(e){setError(e.message)}finally{setBusy(false)}},[request]);
+ useEffect(()=>{refresh()},[refresh]);
+ const start=(genre)=>{setSelected(null);setDraft(genre==='csi'?{...detectiveBlank}: {...blank}) ;setError('')};
+ const update=(key,value)=>setDraft(d=>({...d,[key]:value}));
+ const updateAbility=(key,value)=>setDraft(d=>({...d,abilities:{...d.abilities,[key]:value}}));
+ const toggleSkill=(skill)=>setDraft(d=>({...d,skills:d.skills.includes(skill)?d.skills.filter(x=>x!==skill):[...d.skills,skill]}));
+ async function save(e){e.preventDefault();setSaving(true);setError('');try{
+  const payload={name:draft.name,species:draft.species,className:draft.className,level:draft.level,xp:draft.xp,hp:draft.hp,maxHp:draft.maxHp,ac:draft.ac,abilities:draft.abilities,sheet:{genre:draft.genre,skills:draft.skills,equipment:draft.equipment,spells:draft.spells,biography:draft.biography,experienceType:draft.genre==='csi'?'detective':'dnd'}};
+  if(draft.id){await request('/api/characters',{method:'PATCH',body:JSON.stringify({...payload,id:draft.id})})}else{await request('/api/characters',{method:'POST',body:JSON.stringify(payload)})}
+  setDraft(null);await refresh();
+ }catch(e){setError(e.message)}finally{setSaving(false)}}
+ async function remove(id){if(!window.confirm('Delete this character permanently?'))return;try{await request('/api/characters',{method:'DELETE',body:JSON.stringify({id})});setSelected(null);await refresh()}catch(e){setError(e.message)}}
+ const open=(c)=>{setSelected(c);setDraft(null)};
+ const edit=(c)=>{setSelected(null);setDraft({id:c.id,name:c.name,genre:c.sheet?.genre||'dnd',className:c.class_name,species:c.species,level:c.level,xp:c.experience,abilities:c.abilities,hp:c.hit_points,maxHp:c.max_hit_points,ac:c.armour_class,skills:c.sheet?.skills||[],equipment:c.sheet?.equipment||[],spells:c.sheet?.spells||[],biography:c.sheet?.biography||''})};
+ const activeSkills=useMemo(()=>draft?.genre==='csi'?DETECTIVE_SKILL_GROUPS.investigation:SKILLS,[draft?.genre]);
+ return <main className="character-hub">
+  <div className="character-top"><button className="character-back" onClick={onBack}>← BACK TO STORYFOUNDRY</button><span>YOUR CHARACTER VAULT</span></div>
+  <header className="character-intro"><div className="eyebrow">ONE IDENTITY. MANY ADVENTURES.</div><h1>Character <em>Vault</em></h1><p>Your characters live on your account, not inside a single campaign. Build them once, then bring them along.</p></header>
+  {error&&<div className="error" role="alert">{error}</div>}
+  {draft?<form className="character-editor" onSubmit={save}>
+   <div className="editor-heading"><div><div className="eyebrow">{draft.genre==='csi'?'CRIME INVESTIGATION':'DUNGEONS & DRAGONS'}</div><h2>{draft.id?'Edit character':'Create character'}</h2></div><button type="button" className="character-back" onClick={()=>setDraft(null)}>CANCEL</button></div>
+   <div className="character-grid">
+    <label className="character-field wide"><span>CHARACTER NAME</span><input required maxLength="60" value={draft.name} onChange={e=>update('name',e.target.value)} placeholder="Give them a name"/></label>
+    {draft.genre==='dnd'?<><label className="character-field"><span>CLASS</span><select value={draft.className} onChange={e=>update('className',e.target.value)}>{DND_CLASSES.map(x=><option key={x}>{x}</option>)}</select></label><label className="character-field"><span>SPECIES</span><select value={draft.species} onChange={e=>update('species',e.target.value)}>{SPECIES.map(x=><option key={x}>{x}</option>)}</select></label></>:<><label className="character-field"><span>RANK / ROLE</span><select value={draft.className} onChange={e=>update('className',e.target.value)}>{['Police Constable','Detective Constable','Detective Sergeant','Detective Inspector','Forensic Investigator','Civilian Consultant'].map(x=><option key={x}>{x}</option>)}</select></label><label className="character-field"><span>DEPARTMENT</span><select value={draft.species} onChange={e=>update('species',e.target.value)}>{['Major Crime','CID','Homicide','Forensics','Cold Case Review','Independent'].map(x=><option key={x}>{x}</option>)}</select></label></>}
+    <label className="character-field"><span>LEVEL</span><input type="number" min="1" max="20" value={draft.level} onChange={e=>update('level',Number(e.target.value))}/></label>
+    <label className="character-field"><span>EXPERIENCE POINTS</span><input type="number" min="0" value={draft.xp} onChange={e=>update('xp',Number(e.target.value))}/></label>
+    <label className="character-field"><span>HIT POINTS / STAMINA</span><input type="number" min="1" value={draft.maxHp} onChange={e=>{update('maxHp',Number(e.target.value));update('hp',Number(e.target.value))}}/></label>
+    <label className="character-field"><span>ARMOUR / DEFENCE</span><input type="number" min="1" max="40" value={draft.ac} onChange={e=>update('ac',Number(e.target.value))}/></label>
+   </div>
+   <div className="editor-section"><h3>{draft.genre==='csi'?'CORE ATTRIBUTES':'ABILITY SCORES'}</h3><p>{draft.genre==='csi'?'These represent your investigator’s physical and mental capabilities.':'Ability scores determine your character’s strengths and weaknesses.'}</p><div className="ability-grid">{ABILITIES.map(([key,label])=><div className="ability-card" key={key}><span>{label}</span><input type="number" min="1" max="30" value={draft.abilities[key]} onChange={e=>updateAbility(key,Number(e.target.value))}/><b>{modifier(draft.abilities[key])>=0?'+':''}{modifier(draft.abilities[key])}</b></div>)}</div></div>
+   <div className="editor-section"><h3>{draft.genre==='csi'?'INVESTIGATIVE SPECIALISMS':'SKILLS & PROFICIENCIES'}</h3><p>Select the areas where this character has training.</p><div className="skill-grid">{activeSkills.map(skill=><label key={skill} className="skill-option"><input type="checkbox" checked={draft.skills.includes(skill)} onChange={()=>toggleSkill(skill)}/>{skill}</label>)}</div></div>
+   <div className="editor-section"><h3>{draft.genre==='csi'?'CASE NOTES & BACKGROUND':'BACKGROUND & EQUIPMENT'}</h3><textarea className="character-notes" rows="4" value={draft.biography} onChange={e=>update('biography',e.target.value)} placeholder={draft.genre==='csi'?'Career history, strengths, weaknesses, personal notes...':'Background, personality, history...'}/>{draft.genre==='dnd'&&<><label className="character-field"><span>EQUIPMENT (comma separated)</span><input value={draft.equipment.join(', ')} onChange={e=>update('equipment',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label><label className="character-field"><span>SPELLS (comma separated)</span><input value={draft.spells.join(', ')} onChange={e=>update('spells',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label></>}</div>
+   <button className="character-save" disabled={saving}>{saving?'SAVING CHARACTER…':'SAVE TO MY CHARACTER VAULT ↗'}</button>
+  </form>:selected?<section className="character-sheet">
+   <div className="editor-heading"><div><div className="eyebrow">{selected.sheet?.genre==='csi'?'INVESTIGATIVE DOSSIER':'ADVENTURER RECORD'}</div><h2>{selected.name}</h2><p>{selected.class_name} · {selected.species}</p></div><button className="character-back" onClick={()=>setSelected(null)}>← VAULT</button></div>
+   <Progress character={{xp:selected.experience,sheet:selected.sheet,genre:selected.sheet?.genre}}/>
+   <div className="sheet-stats"><div><small>LEVEL</small><b>{selected.level}</b></div><div><small>XP</small><b>{Number(selected.experience).toLocaleString()}</b></div><div><small>{selected.sheet?.genre==='csi'?'STAMINA':'HIT POINTS'}</small><b>{selected.hit_points}/{selected.max_hit_points}</b></div><div><small>{selected.sheet?.genre==='csi'?'DEFENCE':'ARMOUR CLASS'}</small><b>{selected.armour_class}</b></div></div>
+   <div className="editor-section"><h3>ATTRIBUTES</h3><div className="ability-grid">{ABILITIES.map(([key,label])=><div className="ability-card" key={key}><span>{label}</span><b>{selected.abilities?.[key]??10}</b><small>{modifier(selected.abilities?.[key]??10)>=0?'+':''}{modifier(selected.abilities?.[key]??10)}</small></div>)}</div></div>
+   <div className="editor-section"><h3>{selected.sheet?.genre==='csi'?'INVESTIGATIVE SPECIALISMS':'SKILLS & PROFICIENCIES'}</h3><div className="skill-grid">{(selected.sheet?.skills||[]).map(x=><span className="skill-chip" key={x}>{x}</span>)}</div></div>
+   {selected.sheet?.biography&&<div className="editor-section"><h3>BACKGROUND / NOTES</h3><p className="character-bio">{selected.sheet.biography}</p></div>}
+   <div className="sheet-actions"><button className="character-save" onClick={()=>edit(selected)}>EDIT CHARACTER</button><button className="character-delete" onClick={()=>remove(selected.id)}>DELETE</button></div>
+   {selected.sheet?.genre==='csi'&&<p className="progress-note">Case-earned XP and automatic difficulty scaling will be connected to the investigation engine next. Character identity and progression data are now persistent.</p>}
+  </section>:<>
+   <div className="character-actions"><button onClick={()=>start('dnd')}><b>＋</b><span><strong>Create D&D character</strong><small>Class, species, ability scores and skills</small></span></button><button onClick={()=>start('csi')}><b>＋</b><span><strong>Create investigator</strong><small>Build a reusable detective career</small></span></button></div>
+   <section className="vault-list"><div className="vault-title"><h2>Your characters</h2><span>{characters.length} SAVED</span></div>{busy?<p className="vault-empty">Loading your character vault…</p>:characters.length===0?<p className="vault-empty">No characters yet. Create your first adventurer or investigator above.</p>:characters.map(c=><button className="vault-card" key={c.id} onClick={()=>open(c)}><div className="vault-avatar">{c.sheet?.genre==='csi'?'🕵️':'⚔️'}</div><div className="vault-info"><strong>{c.name}</strong><span>{c.class_name} · {c.species}</span><small>LEVEL {c.level} · {Number(c.experience).toLocaleString()} XP</small></div><span className="vault-arrow">↗</span></button>)}</section>
+  </>}
+ </main>
+}
