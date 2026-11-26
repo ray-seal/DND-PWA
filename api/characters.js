@@ -47,7 +47,7 @@ module.exports=async function(req,res){
   const speciesBonus={Human:{str:1,dex:1,con:1,int:1,wis:1,cha:1},Elf:{dex:2},Dwarf:{con:2},Halfling:{dex:2},Dragonborn:{str:2,cha:1},Gnome:{int:2},'Half-Elf':{cha:2},'Half-Orc':{str:2,con:1},Tiefling:{int:1,cha:2}}[species]||{};
   for(const key of ['str','dex','con','int','wis','cha'])abilities[key]=Math.min(20,abilities[key]+(speciesBonus[key]||0));
   const dndStats=sheet.genre==='dnd'?derivedDnd(className,abilities,1):null;
-  const hp=dndStats?dndStats.maxHp:Math.max(1,Math.min(10000,Math.floor(Number(b.maxHp)||10))),ac=dndStats?dndStats.armourClass:Math.max(1,Math.min(40,Math.floor(Number(b.ac)||10)));
+  const hp=dndStats?dndStats.maxHp:sheet.genre==='csi'?0:Math.max(1,Math.min(10000,Math.floor(Number(b.maxHp)||10))),ac=dndStats?dndStats.armourClass:sheet.genre==='csi'?0:Math.max(1,Math.min(40,Math.floor(Number(b.ac)||10)));
   if(dndStats)sheet.dndStats=dndStats;
   if(req.method==='POST'){
    const result=await db.query('INSERT INTO public.characters(owner_id,name,species,class_name,level,experience,abilities,hit_points,max_hit_points,armour_class,sheet) VALUES($1,$2,$3,$4,1,0,$5,$6,$6,$7,$8) RETURNING id,name,species,class_name,level,experience,abilities,hit_points,max_hit_points,armour_class,sheet,version,created_at,updated_at',
