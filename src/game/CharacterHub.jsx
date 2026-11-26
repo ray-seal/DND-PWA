@@ -28,7 +28,8 @@ export default function CharacterHub({onBack}) {
  const toggleSkill=(skill)=>setDraft(d=>({...d,skills:d.skills.includes(skill)?d.skills.filter(x=>x!==skill):d.skills.length>=5?d.skills:[...d.skills,skill]}));
  async function save(e){e.preventDefault();setSaving(true);setError('');try{
   const payload={name:draft.name,species:draft.species,className:draft.className,level:draft.level,xp:draft.xp,hp:draft.hp,maxHp:draft.maxHp,ac:draft.ac,abilities:draft.abilities,sheet:{genre:draft.genre,skills:draft.skills,equipment:draft.equipment,spells:draft.spells,biography:draft.biography,experienceType:draft.genre==='csi'?'detective':'dnd'}};
-  if(draft.genre==='dnd'&&!draft.id&&!abilityRolls)throw new Error('Roll your six ability scores before saving.');\n  if(draft.id){await request('/api/characters',{method:'PATCH',body:JSON.stringify({...payload,id:draft.id})})}else{await request('/api/characters',{method:'POST',body:JSON.stringify(payload)})}
+  if(draft.genre==='dnd'&&!draft.id&&!abilityRolls)throw new Error('Roll your six ability scores before saving.');
+  if(draft.id){await request('/api/characters',{method:'PATCH',body:JSON.stringify({...payload,id:draft.id})})}else{await request('/api/characters',{method:'POST',body:JSON.stringify(payload)})}
   setDraft(null);await refresh();
  }catch(e){setError(e.message)}finally{setSaving(false)}}
  async function remove(id){if(!window.confirm('Delete this character permanently?'))return;try{await request('/api/characters',{method:'DELETE',body:JSON.stringify({id})});setSelected(null);await refresh()}catch(e){setError(e.message)}}
