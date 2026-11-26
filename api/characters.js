@@ -2,6 +2,29 @@ const {getPool,verifyUser}=require('./_lib/db');
 function body(req){return typeof req.body==='string'?JSON.parse(req.body):(req.body||{})}
 function cleanName(value){const name=String(value||'').trim();if(!name||name.length>60)throw Object.assign(new Error('Character name must be 1-60 characters.'),{status:400});return name}
 function cleanAbilities(value){const a=value&&typeof value==='object'?value:{};const result={};for(const k of ['str','dex','con','int','wis','cha']){const n=Number(a[k]??10);if(!Number.isInteger(n)||n<3||n>20)throw Object.assign(new Error('D&D ability scores must be whole numbers from 3 to 20.'),{status:400});result[k]=n}return result}
+const CLASS_RULES={
+ Barbarian:{die:12,saves:['str','con'],armour:'Unarmoured',weapon:'Greataxe',slots:0,mode:'barbarian'},
+ Bard:{die:8,saves:['dex','cha'],armour:'Leather armour',weapon:'Rapier',slots:2},
+ Cleric:{die:8,saves:['wis','cha'],armour:'Scale mail',weapon:'Mace',slots:2},
+ Druid:{die:8,saves:['int','wis'],armour:'Leather armour',weapon:'Scimitar',slots:2},
+ Fighter:{die:10,saves:['str','con'],armour:'Chain mail',weapon:'Longsword',slots:0},
+ Monk:{die:8,saves:['str','dex'],armour:'Unarmoured',weapon:'Shortsword',slots:0,mode:'monk'},
+ Paladin:{die:10,saves:['wis','cha'],armour:'Chain mail',weapon:'Longsword',slots:0},
+ Ranger:{die:10,saves:['str','dex'],armour:'Scale mail',weapon:'Longbow',slots:0},
+ Rogue:{die:8,saves:['dex','int'],armour:'Leather armour',weapon:'Rapier',slots:0},
+ Sorcerer:{die:6,saves:['con','cha'],armour:'Unarmoured',weapon:'Dagger',slots:2},
+ Warlock:{die:8,saves:['wis','cha'],armour:'Leather armour',weapon:'Light crossbow',slots:1},
+ Wizard:{die:6,saves:['int','wis'],armour:'Unarmoured',weapon:'Quarterstaff',slots:2}
+};
+const ARMOUR_AC={'Unarmoured':10,'Leather armour':11,'Scale mail':14,'Chain mail':16};
+function derivedDnd(className,abilities,level=1){
+ const rule=CLASS_RULES[className]||CLASS_RULES.Fighter,mod=k=>Math.floor(((abilities[k]??10)-10)/2),dex=mod('dex');
+ const hp=Math.max(1,rule.die+mod('con')+(level-1)*(Math.ceil(rule.die/2)+1+mod('con')));
+ let ac=ARMOUR_AC[rule.armour]+(rule.armour==='Chain mail'?0:rule.armour==='Scale mail'?Math.min(2,dex):dex);
+ if(rule.mode==='barbarian')ac=10+dex+mod('con');
+ if(rule.mode==='monk')ac=10+dex+mod('wis');
+ return {hitDie:rule.die,savingThrows:rule.saves,armour:rule.armour,weapon:rule.weapon,spellSlots:rule.slots,spellSlotLevel:1,proficiencyBonus:Math.ceil(level/4)+1,maxHp:hp,armourClass:ac};
+}
 function cleanSheet(value){const s=value&&typeof value==='object'?value:{};return {genre:s.genre==='csi'?'csi':'dnd',experienceType:s.genre==='csi'?'detective':'dnd',skills:Array.isArray(s.skills)?s.skills.map(x=>String(x).slice(0,60)).slice(0,5):[],equipment:Array.isArray(s.equipment)?s.equipment.map(x=>String(x).slice(0,100)).slice(0,60):[],spells:Array.isArray(s.spells)?s.spells.map(x=>String(x).slice(0,100)).slice(0,60):[],biography:String(s.biography||'').slice(0,4000)}}
 module.exports=async function(req,res){
  res.setHeader('Cache-Control','no-store');
@@ -21,7 +44,7 @@ module.exports=async function(req,res){
   }
   const name=cleanName(b.name),species=String(b.species||'').slice(0,80),className=String(b.className||'Adventurer').slice(0,80);
   const abilities=cleanAbilities(b.abilities),sheet=cleanSheet(b.sheet);
-  const hp=Math.max(1,Math.min(10000,Math.floor(Number(b.maxHp)||10))),ac=Math.max(1,Math.min(40,Math.floor(Number(b.ac)||10)));
+  const dndStats=sheet.genre==='dnd'?derivedDnd(className,abilities,1):null;\n  const hp=dndStats?dndStats.maxHp:Math.max(1,Math.min(10000,Math.floor(Number(b.maxHp)||10))),ac=dndStats?dndStats.armourClass:Math.max(1,Math.min(40,Math.floor(Number(b.ac)||10)));\n  if(dndStats)sheet.dndStats=dndStats;
   if(req.method==='POST'){
    const result=await db.query('INSERT INTO public.characters(owner_id,name,species,class_name,level,experience,abilities,hit_points,max_hit_points,armour_class,sheet) VALUES($1,$2,$3,$4,1,0,$5,$6,$6,$7,$8) RETURNING id,name,species,class_name,level,experience,abilities,hit_points,max_hit_points,armour_class,sheet,version,created_at,updated_at',
     [user.id,name,species,className,JSON.stringify(abilities),hp,ac,JSON.stringify(sheet)]);
