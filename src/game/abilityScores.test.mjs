@@ -7,6 +7,7 @@ test('rolls four six-sided dice and drops exactly one lowest die', () => {
   const result = rollAbilityScore(() => dice.shift());
   assert.deepEqual(result.dice, [6, 4, 2, 5]);
   assert.equal(result.dropped, 2);
+  assert.equal(result.droppedIndex, 2);
   assert.equal(result.score, 15);
 });
 
@@ -20,4 +21,11 @@ test('generates six independent ability scores', () => {
   const scores = rollAbilityScores(() => values.shift());
   assert.equal(scores.length, 6);
   assert.ok(scores.every(x => x.dice.length === 4 && x.score >= 3 && x.score <= 18));
+});
+
+test('when multiple dice tie for lowest, only the first single die is marked dropped', () => {
+  const dice = [1, 1, 4, 6];
+  const result = rollAbilityScore(() => dice.shift());
+  assert.equal(result.score, 11);
+  assert.equal(result.droppedIndex, 0);
 });
