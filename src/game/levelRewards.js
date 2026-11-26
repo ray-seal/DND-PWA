@@ -44,5 +44,5 @@ export function spellSlotProgression(className,level){
  if(!['Wizard','Sorcerer','Bard','Cleric','Druid','Paladin','Ranger'].includes(className))return null;
  const full={Wizard:[2,3,4,4,4,4,4,4,4],Sorcerer:[2,3,4,4,4,4,4,4,4],Bard:[2,3,4,4,4,4,4,4,4],Cleric:[2,3,4,4,4,4,4,4,4],Druid:[2,3,4,4,4,4,4,4,4]};
  if(className==='Paladin'||className==='Ranger')return level<2?[]:[Math.floor(level/2)];
- return full[className].map((_,i)=>{const slotsByLevel={2:[2],3:[3],4:[4,2],5:[4,3],6:[4,3,2],7:[4,3,3,1],8:[4,3,3,2],9:[4,3,3,3,1],10:[4,3,3,3,2],11:[4,3,3,3,2,1],12:[4,3,3,3,2,1],13:[4,3,3,3,2,1,1],14:[4,3,3,3,2,1,1],15:[4,3,3,3,2,1,1,1],16:[4,3,3,3,2,1,1,1],17:[4,3,3,3,2,1,1,1,1],18:[4,3,3,3,3,1,1,1,1],19:[4,3,3,3,3,2,1,1,1],20:[4,3,3,3,3,2,2,1,1]};return (slotsByLevel[level]||[])[i]||0});
+ return (DND_SPELL_SLOTS.Wizard[Math.max(0,Math.min(19,Math.floor(level)-1))]||[]).filter(n=>n>0);
 }
