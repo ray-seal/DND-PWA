@@ -5,6 +5,15 @@ function assistanceLevel(hintLevel) {
   return level === 1 ? 'gentle' : level === 2 ? 'directional' : level === 3 ? 'direct' : null;
 }
 
+
+function requestedAssistanceLevel(message, requested = 0) {
+  const explicit = Math.max(0, Math.min(3, Number(requested) || 0));
+  const text = String(message || '').toLowerCase();
+  if (/\b(who did it|who is the culprit|tell me (the )?answer|give me the solution|reveal the culprit|solve the case for me|what is the solution)\b/.test(text)) return Math.max(3, explicit);
+  if (/\b(give me a hint|need a hint|point me in the right direction|give me a clue|i am stuck)\b/.test(text)) return Math.max(1, explicit);
+  return explicit;
+}
+
 function recordAssistance(state, hintLevel) {
   const kind = assistanceLevel(hintLevel);
   if (!kind) return state;
@@ -81,4 +90,4 @@ function calculateCaseReview(state, suspectId, reasoning = '') {
   };
 }
 
-module.exports = { ASSISTANCE_COSTS, assistanceLevel, recordAssistance, calculateCaseScore, preserveCaseTruth, calculateCaseReview };
+module.exports = { ASSISTANCE_COSTS, assistanceLevel, recordAssistance, calculateCaseScore, preserveCaseTruth, calculateCaseReview, requestedAssistanceLevel };
