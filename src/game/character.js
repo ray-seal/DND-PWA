@@ -3,6 +3,9 @@ import { validateCharacter, abilityModifier, proficiencyBonus } from './rules.js
 export function createCharacter(input) {
   const level = Math.max(1, Math.min(20, Number(input.level) || 1));
   const abilities = { str:10, dex:10, con:10, int:10, wis:10, cha:10, ...(input.abilities || {}) };
+  for (const [key, score] of Object.entries(abilities)) {
+    if (!Number.isInteger(score) || score < 3 || score > 20) throw new RangeError(`${key.toUpperCase()} must be an integer from 3 to 20.`);
+  }
   const con = abilityModifier(abilities.con);
   const hitDie = Math.max(1, Math.min(12, Number(input.hitDie) || 8));
   const maxHp = Math.max(1, Number(input.maxHp) || (hitDie + con + (level - 1) * Math.max(1, Math.floor(hitDie / 2) + 1 + con)));
