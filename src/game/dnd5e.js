@@ -1,15 +1,15 @@
 export const DND_CLASS_RULES = Object.freeze({
  Barbarian:{hitDie:12, saves:['str','con'], armour:'unarmoured-barbarian', starterArmour:'Unarmoured', weapon:'Greataxe', slots:[0,0,0,0,0,0,0,0,0]},
- Bard:{hitDie:8,saves:['dex','cha'],armour:'light',starterArmour:'Leather armour',weapon:'Rapier',slots:[2,3,4,4,4,4,4,4,4]},
+ Bard:{hitDie:8,saves:['dex','cha'],armour:'light',starterArmour:'Leather armour',weapon:'Rapier',slots:[2,3,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22]},
  Cleric:{hitDie:8,saves:['wis','cha'],armour:'medium',starterArmour:'Scale mail',weapon:'Mace',slots:[2,3,4,4,4,4,4,4,4]},
  Druid:{hitDie:8,saves:['int','wis'],armour:'medium',starterArmour:'Leather armour',weapon:'Scimitar',slots:[2,3,4,4,4,4,4,4,4]},
  Fighter:{hitDie:10,saves:['str','con'],armour:'heavy',starterArmour:'Chain mail',weapon:'Longsword',slots:[0,0,0,0,0,0,0,0,0]},
  Monk:{hitDie:8,saves:['str','dex'],armour:'unarmoured-monk',starterArmour:'Unarmoured',weapon:'Shortsword',slots:[0,0,0,0,0,0,0,0,0]},
- Paladin:{hitDie:10,saves:['wis','cha'],armour:'heavy',starterArmour:'Chain mail',weapon:'Longsword',slots:[0,0,0,3,3,3,3,3,3]},
- Ranger:{hitDie:10,saves:['str','dex'],armour:'medium',starterArmour:'Scale mail',weapon:'Longbow',slots:[0,0,0,3,3,3,3,3,3]},
+ Paladin:{hitDie:10,saves:['wis','cha'],armour:'heavy',starterArmour:'Chain mail',weapon:'Longsword',slots:[0,2,3,3,4,4,4,4,6,6,6,6,7,7,8,8,8,8,9,9]},
+ Ranger:{hitDie:10,saves:['str','dex'],armour:'medium',starterArmour:'Scale mail',weapon:'Longbow',slots:[0,2,3,3,4,4,4,4,6,6,6,6,7,7,8,8,8,8,9,9]},
  Rogue:{hitDie:8,saves:['dex','int'],armour:'light',starterArmour:'Leather armour',weapon:'Rapier',slots:[0,0,0,0,0,0,0,0,0]},
  Sorcerer:{hitDie:6,saves:['con','cha'],armour:'none',starterArmour:'Unarmoured',weapon:'Dagger',slots:[2,3,4,4,4,4,4,4,4]},
- Warlock:{hitDie:8,saves:['wis','cha'],armour:'light',starterArmour:'Leather armour',weapon:'Light crossbow',slots:[1,2,2,2,2,2,2,2,2]},
+ Warlock:{hitDie:8,saves:['wis','cha'],armour:'light',starterArmour:'Leather armour',weapon:'Light crossbow',slots:[1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]},
  Wizard:{hitDie:6,saves:['int','wis'],armour:'none',starterArmour:'Unarmoured',weapon:'Quarterstaff',slots:[2,3,4,4,4,4,4,4,4]}
 });
 const ARMOUR = {
@@ -44,6 +44,6 @@ export function startingStats(className,abilities,level=1,armourName){
  else if(armour.type==='none')ac+=dex;
  if(rule.armour==='unarmoured-barbarian'&&!armourName)ac=10+dex+con;
  if(rule.armour==='unarmoured-monk'&&!armourName)ac=10+dex+wis;
- return {level:safeLevel,hitDie:rule.hitDie,maxHp:hp,hp,armourClass:ac,armour:armourName||rule.starterArmour,weapon:rule.weapon,savingThrows:rule.saves,spellSlots:rule.slots[safeLevel-1]||0,spellSlotLevel:Math.min(9,Math.ceil(safeLevel/2)),proficiencyBonus:Math.ceil(safeLevel/4)+1};
+ return {level:safeLevel,hitDie:rule.hitDie,maxHp:hp,hp,armourClass:ac,armour:armourName||rule.starterArmour,weapon:rule.weapon,savingThrows:rule.saves,spellSlots:rule.slots[safeLevel-1]||0,spellSlotLevel:safeLevel===1?1:Math.min(9,Math.ceil((safeLevel-1)/2)),proficiencyBonus:Math.ceil(safeLevel/4)+1};
 }
 export function classRules(className){return DND_CLASS_RULES[className]||DND_CLASS_RULES.Fighter}
