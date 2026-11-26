@@ -30,3 +30,4 @@
 .lab-result{padding:10px;background:#202c29;border-left:3px solid #83c99a;border-radius:3px}
 .case-report-panel form{margin-top:15px}.case-result{padding:16px;background:#24251f;border:1px solid #8b7957;border-radius:7px;color:#e6d8c4;font-size:12px;line-height:1.8}.case-result strong{font:600 22px 'Playfair Display',serif;color:#d9bd91}
 .active-tool{color:#d9bd91!important}
+.visual-features{font-size:11px;color:#c8c0b1;line-height:1.8}.lab-result{margin:10px 0;padding:12px;background:#202c29;border-left:3px solid #83c99a;border-radius:3px}.lab-result p{margin:7px 0;font-size:12px;line-height:1.6}.lab-result small{font-size:10px;color:#a9b8ad;line-height:1.5}
