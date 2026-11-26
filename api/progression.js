@@ -4,7 +4,7 @@ const crypto=require('node:crypto');
 
 const XP={
   fantasy:{quest_completed:100,objective_completed:10,encounter_resolved:25,major_milestone:50},
-  csi:{case_closed:100,evidence_verified:10,interview_insight:10,major_breakthrough:30},
+  csi:{case_closed:100,evidence_verified:10,interview_insight:10,major_breakthrough:30,case_report:0},
   horror:{chapter_survived:50,objective_completed:10,threat_escaped:20,major_milestone:30}
 };
 const THRESHOLDS={
@@ -27,9 +27,9 @@ module.exports=async function(req,res){
   const characterId=String(b.characterId||''),sessionId=String(b.sessionId||''),awardKey=String(b.awardKey||''),track=String(b.track||''),awardToken=String(b.awardToken||'');
   if(!/^[0-9a-f-]{36}$/i.test(characterId)||!/^[0-9a-f-]{36}$/i.test(sessionId))return res.status(400).json({error:'A valid character and adventure session are required.'});
   if(!/^[a-z0-9_-]{1,80}$/i.test(awardKey))return res.status(400).json({error:'Invalid progression event.'});
-  if(!XP[track]||!XP[track][b.type])return res.status(400).json({error:'This progression event is not supported.'});
+  if(!XP[track]||!Object.prototype.hasOwnProperty.call(XP[track],b.type))return res.status(400).json({error:'This progression event is not supported.'});
   const parts=awardToken.split('.');if(parts.length!==2)return res.status(403).json({error:'Progression award was not issued by the game engine.'});const secret=process.env.ADVENTURE_STATE_SECRET||process.env.GEMINI_API_KEY;if(!secret)return res.status(503).json({error:'Progression signing is not configured.'});const expected=crypto.createHmac('sha256',secret).update(parts[0]).digest('base64url');const left=Buffer.from(expected),right=Buffer.from(parts[1]);if(left.length!==right.length||!crypto.timingSafeEqual(left,right))return res.status(403).json({error:'Invalid progression award signature.'});let signed;try{signed=JSON.parse(Buffer.from(parts[0],'base64url').toString('utf8'))}catch{return res.status(403).json({error:'Invalid progression award.'})}if(signed.exp<Date.now()||signed.characterId!==characterId||signed.sessionId!==sessionId||signed.type!==b.type||signed.key!==awardKey)return res.status(403).json({error:'Progression award has expired or does not match.'});
-  const amount=XP[track][b.type];
+  const signedAmount=Number(signed.xp);const amount=b.type==='case_report'&&track==='csi'?Math.max(0,Math.min(250,Number.isInteger(signedAmount)?signedAmount:0)):XP[track][b.type];
   client=await getPool().connect();await client.query('BEGIN');
   const found=await client.query('SELECT id,name,level,experience,abilities,class_name,sheet,max_hit_points,hit_points FROM public.characters WHERE id=$1 AND owner_id=$2 FOR UPDATE',[characterId,user.id]);
   if(!found.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Character not found.'})}

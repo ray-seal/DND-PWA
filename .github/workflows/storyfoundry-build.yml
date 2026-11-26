@@ -5,9 +5,11 @@ on:
       - main
       - rebuild/experience-engine
       - feature/tabletop-rpg-foundation
+      - feature/csi-investigation-system
   pull_request:
     branches:
       - main
+      - feature/github-pages-hosting
 jobs:
   build:
     runs-on: ubuntu-latest
