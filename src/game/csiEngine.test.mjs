@@ -41,7 +41,7 @@ test('case review requires the sealed culprit and discovered evidence to solve',
   assert.equal(solved.verdict,'CASE SOLVED');
   assert.equal(solved.verifiedEvidence,1);
   assert.equal(solved.xpDeducted,35);
-  assert.equal(solved.xpAwarded,220);
+  assert.equal(solved.xpAwarded,230);
   const unsupported=calculateCaseReview(state,'suspect-b','');
   assert.equal(unsupported.verdict,'CASE SOLVED');
   const wrong=calculateCaseReview(state,'suspect-a','A different theory.');
