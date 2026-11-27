@@ -45,3 +45,10 @@
 .investigation-tools>small{display:block;font:9px 'DM Mono',monospace;color:#83c99a;margin-top:8px}
 .investigation-tools>p{font-size:10px;color:#85818b;line-height:1.5;margin:8px 0 0}
 @media(max-width:650px){.tool-actions{display:grid;grid-template-columns:1fr 1fr}.tool-actions button{min-height:42px;text-align:left}}
+
+
+/* Floating return-to-top control for long campaign sessions. */
+.back-to-top{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:50;display:flex;align-items:center;gap:8px;padding:12px 15px;border:1px solid #b99b6b;border-radius:999px;background:#d3b37d;color:#19171a;box-shadow:0 8px 26px #0008;font:11px 'DM Mono',monospace;letter-spacing:.7px;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.back-to-top:hover{transform:translateY(-2px);box-shadow:0 11px 30px #000a}
+.back-to-top:focus-visible{outline:2px solid #eee9df;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.back-to-top{transition:none}}
