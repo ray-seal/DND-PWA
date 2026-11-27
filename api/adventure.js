@@ -18,9 +18,13 @@ function parseJson(s){return JSON.parse(String(s||'').trim().replace(/^\u0060{3}
 async function gemini(key,instruction,contents,temp){
   let last;
   let repairText=null;
+  const deadline=Date.now()+40000;
   const models=[...new Set([PRIMARY_MODEL,BACKUP_MODEL,'gemini-3.1-flash-lite'])];
   for(const model of models){
+    if(deadline-Date.now()<1500)break;
     for(let attempt=0;attempt<2;attempt++){
+      const remaining=deadline-Date.now();
+      if(remaining<1500)break;
       try{
         const maxOutputTokens=attempt===0?8192:12288;
         const requestContents=repairText?[...contents,{role:'user',parts:[{text:'Your previous response was incomplete or invalid JSON. Repair it and return ONLY one complete valid JSON object matching the original requested schema. Do not add commentary. Previous response:\\n'+repairText.slice(0,24000)}]}]:contents;
@@ -32,7 +36,7 @@ async function gemini(key,instruction,contents,temp){
             contents:requestContents,
             generationConfig:{temperature:temp,maxOutputTokens,responseMimeType:'application/json'}
           }),
-          signal:AbortSignal.timeout(22000)
+          signal:AbortSignal.timeout(Math.min(12000,remaining))
         });
         const data=await r.json().catch(()=>({}));
         if(!r.ok){
