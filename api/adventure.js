@@ -18,7 +18,7 @@ function parseJson(s){return JSON.parse(String(s||'').trim().replace(/^\u0060{3}
 async function gemini(key,instruction,contents,temp){
   let last;
   let repairText=null;
-  const models=[...new Set([PRIMARY_MODEL,BACKUP_MODEL])];
+  const models=[...new Set([PRIMARY_MODEL,BACKUP_MODEL,'gemini-3.1-flash-lite'])];
   for(const model of models){
     for(let attempt=0;attempt<2;attempt++){
       try{
